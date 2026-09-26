@@ -86,11 +86,16 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
 .stage.dragging{cursor:grabbing}
 .stage.hovering{cursor:pointer}
 .stage canvas{display:block;width:100%;height:100%}
-.readout{position:absolute;left:10px;right:10px;bottom:10px;pointer-events:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-height:40px;background:rgb(255 255 255 / .92);border:2px solid var(--c2,var(--line));border-radius:12px;padding:8px 12px;font-size:13px;line-height:1.4;color:var(--ink);transition:border-color .15s}
-.readout b{font-size:14px;color:var(--ink-2)}
-.readout .tm{color:var(--muted);font-variant-numeric:tabular-nums}
-.readout .tl{flex-basis:100%}
-.readout .idle{color:var(--muted)}
+.hint{position:absolute;right:14px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.lbls{position:absolute;inset:0;pointer-events:none}
+.lbls svg{position:absolute;inset:0;width:100%;height:100%}
+.lbls line{stroke:#A9B9D6;stroke-width:1.5}
+.lbls circle{fill:#A9B9D6}
+.lbls circle.on{fill:#112233}
+.lbls line.on{stroke:#112233}
+.lbl{position:absolute;left:0;top:0;pointer-events:auto;font-size:12.5px;font-weight:700;line-height:1.2;color:#3B4F6B;background:#fff;border:1.5px solid #C9D4E8;border-radius:999px;padding:3px 10px;cursor:pointer;white-space:nowrap}
+.lbl:hover{border-color:#8FA5CC}
+.lbl[aria-pressed="true"]{background:#112233;border-color:#112233;color:#fff}
 .stage-msg{position:absolute;inset:0;margin:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
 .explode{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:3px 12px;border:1.5px solid var(--line);border-radius:999px;background:#fff}
 .explode input{width:110px;accent-color:#112233}
@@ -189,7 +194,8 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
       <div id="layersView" hidden>
         <div class="stage" id="stage">
           <p class="stage-msg" id="stage-msg">Loading the 3D view…</p>
-          <div class="readout" id="readout" aria-live="polite"></div>
+          <div class="lbls" id="lbls"></div>
+          <div class="hint">Drag to rotate · click any block or empty slot</div>
         </div>
       </div>
 
@@ -391,9 +397,7 @@ function statusHTML() {
     const n = P.filter(p => p.f[fi]).length;
     const car = list(F.carriers.map(c => lc(byId[c].title)));
     return `<span>Showing the <b>${F.title.toLowerCase()}</b>: ${n} of 17 particles feel it.</span>`
-      + (state.view === 'layers'
-        ? `<span class="how">Only its sheet stays solid. Arcs run from the ${car} to every particle that feels it.</span>`
-        : `<span class="how">Bright tiles feel it, faded tiles don't. The CARRIER badge marks the ${car}.</span>`);
+      + (state.view === 'layers' ? `<span class="how">Only its sheet stays solid. Arcs run from the ${car} to every particle that feels it.</span>` : '');
   }
   if (state.mode === 'particle') {
     const s = byId[state.pid];
@@ -402,9 +406,7 @@ function statusHTML() {
       + `<span class="how">It carries electromagnetism but has no charge of its own, so every other tile is faded.</span>`;
     const names = list(felt.map(k => k === 'higgs' ? 'Higgs' : FORCES[k].name.toLowerCase()));
     return `<span>Showing the <b>${lc(s.title)}</b>: it feels ${felt.length === 4 ? 'all four interactions' : names}.</span>`
-      + (state.view === 'layers'
-        ? `<span class="how">On each sheet it feels, an arc runs to the boson it exchanges there. Everything else fades.</span>`
-        : `<span class="how">Badges mark the bosons it can exchange, labeled by force. Faded tiles are other particles.</span>`);
+      + (state.view === 'layers' ? `<span class="how">On each sheet it feels, an arc runs to the boson it exchanges there. Everything else fades.</span>` : '');
   }
   return `<span>Pick a force carrier or a particle to see who interacts with whom.</span>`;
 }
@@ -443,7 +445,7 @@ function activatePid(id) {
 /* ---------- views ---------- */
 const CAPTIONS = {
   chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force, along with the matching outline from the original chart. Click a quark or lepton to see which bosons it exchanges.',
-  layers: 'Each force is a glass sheet: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block on every sheet whose force it feels and an empty slot where it doesn\'t, so quarks stack into full cubes. Drag Separate layers to pull the sheets apart into four maps, and hover any block or slot to see why.'
+  layers: 'Each force is a glass sheet: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block on every sheet whose force it feels and an empty slot where it doesn\'t, so quarks stack into full cubes. Drag Separate layers to pull the sheets apart into four maps, and click any block or slot to see why it is there.'
 };
 function setView(v, animate) {
   state.view = v;
@@ -604,7 +606,7 @@ import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.186.1/
 const SM = window.SM;
 const { P, FK, FORCES, byId, state } = SM;
 const stage = document.getElementById('stage');
-const readout = document.getElementById('readout');
+const lblBox = document.getElementById('lbls');
 const layersView = document.getElementById('layersView');
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CAT = { q: ['#EEBBFF', '#AA77DD'], l: ['#AAEE77', '#66CC33'], g: ['#FF9977', '#DD5544'], s: ['#EEE677', '#EEBB33'] };
@@ -703,32 +705,53 @@ const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowM
 ground.rotation.x = -Math.PI / 2; ground.position.y = -0.03; ground.receiveShadow = true;
 scene.add(ground);
 
-const sheets = [], labels = [], cells = [], rings = [], arcGroups = [], pickables = [];
+const sheets = [], cells = [], rings = [], arcGroups = [], pickables = [];
 const sheetShape = rr(THREE.Shape, GRID_W + 0.5, GRID_D + 0.5, 0.24);
 const sheetGeo = flat(new THREE.ShapeGeometry(sheetShape, 8));
 const edgePts = sheetShape.getPoints(8).map(v => new THREE.Vector3(v.x, 0, -v.y));
 
-function makeLabel(k) {
-  const c = document.createElement('canvas'); c.width = 768; c.height = 128;
-  const t = canvasTex(c);
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.16, 0.36), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false }));
-  mesh.renderOrder = 10;
-  mesh.userData = { force: FK[k] };
-  return { mesh, c, t, k, on: null };
-}
-function drawLabel(L, on) {
-  if (L.on === on) return;
-  L.on = on;
-  const g = L.c.getContext('2d');
-  g.clearRect(0, 0, 768, 128);
-  g.font = '700 58px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
-  const text = FORCES[FK[L.k]].name, w = g.measureText(text).width + 64, x = 768 - w - 6;
-  g.beginPath(); g.roundRect(x, 16, w, 96, 48);
-  g.fillStyle = on ? '#112233' : 'rgba(255,255,255,.94)'; g.fill();
-  g.lineWidth = 5; g.strokeStyle = on ? '#112233' : '#C9D4E8'; g.stroke();
-  g.fillStyle = on ? '#FFFFFF' : '#3B4F6B'; g.textBaseline = 'middle';
-  g.fillText(text, x + 32, 66);
-  L.t.needsUpdate = true;
+// Layer labels are page text in a column beside the stack, each joined to its sheet by a leader line.
+// They spread apart when the sheets are close together, so they stay readable at any separation or angle.
+const SVGNS = 'http://www.w3.org/2000/svg';
+const svg = document.createElementNS(SVGNS, 'svg');
+lblBox.appendChild(svg);
+const labels = FK.map(fk => {
+  const btn = document.createElement('button');
+  btn.type = 'button'; btn.className = 'lbl'; btn.dataset.force = fk;
+  btn.setAttribute('aria-pressed', 'false');
+  btn.textContent = FORCES[fk].name;
+  lblBox.appendChild(btn);
+  const line = document.createElementNS(SVGNS, 'line'), dot = document.createElementNS(SVGNS, 'circle');
+  dot.setAttribute('r', '3.5');
+  svg.append(line, dot);
+  return { btn, line, dot, anchor: new THREE.Vector3() };
+});
+const scr = new THREE.Vector3();
+function placeLabels() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const pts = labels.map((L, k) => {
+    scr.copy(L.anchor).project(camera);
+    return { L, k, ax: (scr.x + 1) / 2 * w, ay: (1 - scr.y) / 2 * h };
+  });
+  const colRight = Math.max(8 + Math.max(...labels.map(L => L.btn.offsetWidth)), Math.min(...pts.map(q => q.ax)) - 26);
+  // Order top to bottom on screen, push apart to a minimum gap, then re-centre on the anchors.
+  // Always stack labels in layer order, Higgs on top. From any allowed angle higher sheets sit higher on screen,
+  // and from directly above (where the sheets overlap) this keeps the order readable.
+  const order = [...pts].sort((a, b) => b.k - a.k);
+  const gap = 28;
+  order.forEach((q, i) => { q.y = i ? Math.max(q.ay, order[i - 1].y + gap) : q.ay; });
+  let shift = order.reduce((t, q) => t + q.ay - q.y, 0) / order.length;
+  // Keep the whole column inside the stage, moving it as a block so labels never overlap.
+  shift = Math.min(shift, h - 18 - order[order.length - 1].y);
+  shift = Math.max(shift, 18 - order[0].y);
+  order.forEach(q => { q.y += shift; });
+  for (const q of pts) {
+    const { btn, line, dot } = q.L;
+    btn.style.transform = `translate(${colRight - btn.offsetWidth}px, ${q.y - btn.offsetHeight / 2}px)`;
+    line.setAttribute('x1', colRight + 2); line.setAttribute('y1', q.y);
+    line.setAttribute('x2', q.ax); line.setAttribute('y2', q.ay);
+    dot.setAttribute('cx', q.ax); dot.setAttribute('cy', q.ay);
+  }
 }
 
 for (let k = 0; k < 4; k++) {
@@ -739,8 +762,6 @@ for (let k = 0; k < 4; k++) {
   g.add(edge);
   scene.add(g);
   sheets.push({ g, mat, edge });
-  const L = makeLabel(k); drawLabel(L, false);
-  scene.add(L.mesh); labels.push(L); pickables.push(L.mesh);
   const ag = new THREE.Group(); scene.add(ag); arcGroups.push(ag);
 }
 
@@ -785,7 +806,7 @@ function layout() {
   for (let k = 0; k < 4; k++) base[k] = k * sp;
   stackH = base[3] + bh;
   sheets.forEach((s, k) => { s.g.position.y = base[k] - 0.004; });
-  labels.forEach((L, k) => L.mesh.position.set(-X0 - TILE / 2 - 1.2, base[k] + bh / 2, Z0 + TILE / 2 - 0.1));
+  labels.forEach((L, k) => L.anchor.set(-X0 - TILE / 2 - 0.2, base[k], Z0 + TILE / 2 + 0.1));
   arcGroups.forEach((g, k) => { g.position.y = base[k] + bh; });
   for (const c of cells) {
     const x = px(c.p), z = pz(c.p), b = base[c.k];
@@ -806,10 +827,6 @@ function placeCamera() {
   const xL = -X0 - TILE / 2 - 1.7, xR = X0 + TILE / 2 + 0.2, zB = -Z0 - TILE / 2 - 0.2, zF = Z0 + TILE / 2 + 0.2;
   tgt.set((xL + xR) / 2, stackH / 2, 0);
   const dir = new THREE.Vector3(Math.sin(cam.ph) * Math.sin(cam.th), Math.cos(cam.ph), Math.sin(cam.ph) * Math.cos(cam.th));
-  // Keep the scene clear of the readout docked at the bottom: shift the view up and fit into the space above it.
-  const w = stage.clientWidth, h = stage.clientHeight, rh = readout.offsetHeight + 16;
-  if (w && h) camera.setViewOffset(w, h, 0, rh / 2, w, h);
-  const yMax = 0.95 * (1 - rh / Math.max(h, 1));
   let dist = 12;
   for (let i = 0; i < 10; i++) {
     camera.position.copy(tgt).addScaledVector(dir, dist);
@@ -818,7 +835,7 @@ function placeCamera() {
     let m = 0;
     for (const x of [xL, xR]) for (const y of [0, stackH]) for (const z of [zB, zF]) {
       corner.set(x, y, z).project(camera);
-      m = Math.max(m, Math.abs(corner.x) / 0.95, Math.abs(corner.y) / yMax);
+      m = Math.max(m, Math.abs(corner.x) / 0.95, Math.abs(corner.y) / 0.92);
     }
     dist *= m;
   }
@@ -862,7 +879,11 @@ function update() {
     const o = fi >= 0 ? (k === fi ? 0.34 : 0.05) : sel ? (sel.f[k] ? 0.2 : 0.05) : 0.16;
     s.mat.opacity = o; s.edge.material.opacity = Math.min(1, o * 3.5);
   });
-  labels.forEach((L, k) => drawLabel(L, fi === k || (!!sel && !!sel.f[k])));
+  labels.forEach((L, k) => {
+    const on = fi === k || (!!sel && !!sel.f[k]);
+    L.btn.setAttribute('aria-pressed', String(on));
+    L.line.classList.toggle('on', on); L.dot.classList.toggle('on', on);
+  });
   arcGroups.forEach(g => { g.children.forEach(m => m.geometry.dispose()); g.clear(); });
   if (fi >= 0) {
     const car = byId[state.via];
@@ -885,7 +906,7 @@ function frame() {
   layout();
   ground.material.opacity = 0.1 * (1 - ex.v);
   placeCamera();
-  labels.forEach(L => L.mesh.quaternion.copy(camera.quaternion));
+  placeLabels();
   renderer.render(scene, camera);
   if (layersView.hidden) { renderer.setAnimationLoop(null); running = false; }
 }
@@ -924,11 +945,10 @@ function pick(e) {
   ray.setFromCamera(ndc, camera);
   const hits = ray.intersectObjects(pickables, false);
   // Prefer a real block over an empty slot that happens to float in front of it.
-  const hit = hits.find(h => h.object.userData.force || byId[h.object.userData.pid].f[h.object.userData.k]) || hits[0];
+  const hit = hits.find(h => byId[h.object.userData.pid].f[h.object.userData.k]) || hits[0];
   return hit ? hit.object.userData : null;
 }
-const esc = s => s.replace(/</g, '&lt;');
-// Hovering lights up one block or slot and describes it in the readout docked at the bottom of the stage.
+// Hovering only highlights; clicking a block or slot fills in the side panel.
 let hovered = null;
 function glow(c, on) {
   if (!c) return;
@@ -939,27 +959,12 @@ function glow(c, on) {
     c.mat.color.set(on ? 0x112233 : 0x8C9BB5);
   }
 }
-function idle() {
-  readout.style.setProperty('--c2', 'var(--line)');
-  readout.innerHTML = '<span class="idle">Drag to rotate. Point at a block or empty slot to see why it is there, and click to select it.</span>';
-}
 function hover(e) {
   const u = e ? pick(e) : null;
-  const c = u && !u.force ? cells.find(c => c.p.id === u.pid && c.k === u.k) : null;
+  const c = u ? cells.find(c => c.p.id === u.pid && c.k === u.k) : null;
   if (c !== hovered) { glow(hovered, false); glow(c, true); hovered = c; }
   stage.classList.toggle('hovering', !!u);
-  if (!u) return idle();
-  if (u.force) {
-    readout.style.setProperty('--c2', 'var(--line)');
-    readout.innerHTML = `<b>${FORCES[u.force].title}</b><span class="tm">Click to show who feels it.</span>`;
-    return;
-  }
-  const p = byId[u.pid], fk = FK[u.k], y = !!p.f[u.k];
-  readout.style.setProperty('--c2', CAT[p.c][1]);
-  readout.innerHTML = `<b>${p.title}</b><span class="tm">${esc(p.m)} · charge ${p.q} · spin ${p.spin}</span>`
-    + `<span class="tl"><b style="font-size:13px">${FORCES[fk].name} layer:</b> ${y ? '✓ feels it.' : 'empty slot.'} ${SM.reason(p, fk)}</span>`;
 }
-idle();
 let drag = null;
 const el = renderer.domElement;
 el.addEventListener('pointerdown', e => {
@@ -982,8 +987,7 @@ el.addEventListener('pointermove', e => {
 el.addEventListener('pointerup', e => {
   if (drag && !drag.moved) {
     const u = pick(e);
-    if (u && u.force) SM.selectForce(u.force);
-    else if (u) SM.activatePid(u.pid);
+    if (u) SM.activatePid(u.pid);
   }
   drag = null; stage.classList.remove('dragging');
 });
