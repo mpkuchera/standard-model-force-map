@@ -72,11 +72,14 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
 .tile:hover .ring{opacity:.25}
 .tile:focus-visible .ring{opacity:1;stroke:#3366CC}
 .tile.sel .ring,.tile.carrier .ring{opacity:1}
-.tile.link .ring{opacity:1;stroke-dasharray:18 10}
+.tile.link .ring{opacity:1}
 .tile .badge{opacity:0;transition:opacity .2s}
-.tile.carrier .badge{opacity:1}
+.tile.carrier .badge,.tile.link .badge,.tile.sel .badge{opacity:1}
+.tile.sel .badge rect{fill:#3B4F6B}
+.status{margin:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 10px;background:var(--soft);border:1.5px solid var(--line);border-radius:14px;padding:9px 14px;font-size:14px;line-height:1.45;color:var(--ink)}
+.status b{color:var(--ink-2)}
+.status .how{color:var(--muted);font-size:13px}
 .tile.dim{opacity:.16}
-.tile.fade{opacity:.35}
 
 /* ---- 3D layers ---- */
 .stage{position:relative;height:clamp(340px,58vw,520px);border-radius:18px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 28%,#FFFFFF,#EDF2FB 75%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
@@ -194,6 +197,8 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
           <button type="button" class="btn" id="cam-side" data-cam="side">From the side</button>
         </div>
       </div>
+
+      <p class="status" id="status" aria-live="polite"></p>
 
       <div id="chartView" class="chart"></div>
 
@@ -363,7 +368,7 @@ function tileSVG(p) {
     ${sym}
     <text class="pmass" x="15" y="40">${esc(p.m)}</text><text class="pchar" x="15" y="80">${p.q}</text><text class="pspin" x="15" y="120">${p.spin}</text>
     ${name}
-    <g class="badge"><rect x="126" y="-17" width="108" height="32" rx="16" fill="#112233"/><text x="180" y="6" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff" letter-spacing="1.5">CARRIER</text></g>
+    <g class="badge"><rect x="126" y="-17" width="108" height="32" rx="16" fill="#112233"/><text x="180" y="6" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff" letter-spacing="1.5" class="btxt">CARRIER</text></g>
   </g>`;
 }
 function buildChart() {
@@ -391,26 +396,53 @@ function buildChart() {
 </svg>`;
 }
 
+const SHORT = { strong: 'STRONG', em: 'EM', weak: 'WEAK', higgs: 'HIGGS' };
+// p is a carrier of a force that particle s feels
+const linked = (s, p) => !!(p.mediates && s.f[FK.indexOf(p.mediates)]);
+const lc = t => /^(W|Z|Higgs)\b/.test(t) ? t : t[0].toLowerCase() + t.slice(1);
+const list = a => a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' and ' + a[a.length - 1];
+
+function statusHTML() {
+  if (state.mode === 'force') {
+    const F = FORCES[state.force], fi = FK.indexOf(state.force);
+    const n = P.filter(p => p.f[fi]).length;
+    const car = list(F.carriers.map(c => lc(byId[c].title)));
+    return `<span>Showing the <b>${F.title.toLowerCase()}</b>: ${n} of 17 particles feel it.</span>`
+      + `<span class="how">Bright tiles feel it, faded tiles don't. The CARRIER badge marks the ${car}.</span>`;
+  }
+  if (state.mode === 'particle') {
+    const s = byId[state.pid];
+    const felt = FK.filter((k, i) => s.f[i]);
+    if (!felt.length) return `<span>Showing the <b>${lc(s.title)}</b>: it feels none of these interactions directly.</span>`
+      + `<span class="how">It carries electromagnetism but has no charge of its own, so every other tile is faded.</span>`;
+    const names = list(felt.map(k => FORCES[k].name.toLowerCase()));
+    return `<span>Showing the <b>${lc(s.title)}</b>: it feels ${felt.length === 4 ? 'all four interactions' : names}.</span>`
+      + `<span class="how">Badges mark the bosons it can exchange, labeled by force. Faded tiles are other particles.</span>`;
+  }
+  return `<span>Pick a force carrier or a particle to see who interacts with whom.</span>`;
+}
+
 function renderChart() {
   const fi = FK.indexOf(state.force);
   const s = byId[state.pid];
-  const zonesOn = new Set();
-  if (state.mode === 'force') zonesOn.add(state.force);
-  if (state.mode === 'particle') FK.forEach((k, i) => { if (s.f[i]) zonesOn.add(k); });
-  ['strong', 'em', 'weak'].forEach(k => document.getElementById('z-' + k).classList.toggle('on', zonesOn.has(k)));
+  // Force outlines only light up when a force is picked; in particle mode they would cover the whole chart.
+  ['strong', 'em', 'weak'].forEach(k => document.getElementById('z-' + k).classList.toggle('on', state.mode === 'force' && state.force === k));
   document.querySelectorAll('#chartView .tile').forEach(t => {
     const p = byId[t.dataset.pid];
     const cls = ['tile'];
+    let badge = 'CARRIER';
     if (state.mode === 'force') {
       if (p.mediates === state.force) cls.push('carrier');
       else if (!p.f[fi]) cls.push('dim');
     } else if (state.mode === 'particle') {
-      if (p.id === s.id) cls.push('sel');
-      else if (p.mediates && s.f[FK.indexOf(p.mediates)]) cls.push('link');
-      else cls.push('fade');
+      if (p.id === s.id) { cls.push('sel'); badge = 'SELECTED'; }
+      else if (linked(s, p)) { cls.push('link'); badge = SHORT[p.mediates]; }
+      else cls.push('dim');
     }
     t.setAttribute('class', cls.join(' '));
+    t.querySelector('.btxt').textContent = badge;
   });
+  $('#status').innerHTML = statusHTML();
 }
 
 /* ---------- 3D layers ---------- */
@@ -455,12 +487,12 @@ function render3D() {
   });
   lift.querySelectorAll('.t3').forEach(t => {
     const p = byId[t.dataset.pid];
-    t.classList.toggle('carrier', fi >= 0 && p.mediates === state.force);
+    t.classList.toggle('carrier', fi >= 0 ? p.mediates === state.force : !!sel && linked(byId[sel], p));
     t.classList.toggle('sel', p.id === sel);
   });
   lift.querySelectorAll('.bb').forEach(b => {
     const p = byId[b.dataset.pid];
-    b.classList.toggle('dim', fi >= 0 ? !p.f[fi] && p.mediates !== state.force : sel ? p.id !== sel : false);
+    b.classList.toggle('dim', fi >= 0 ? !p.f[fi] && p.mediates !== state.force : sel ? p.id !== sel && !linked(byId[sel], p) : false);
   });
   document.querySelectorAll('#legend3d .band').forEach(b => b.setAttribute('aria-pressed', String(fi >= 0 && b.dataset.force === state.force)));
 }
@@ -527,7 +559,7 @@ stage.addEventListener('pointercancel', endDrag);
 
 /* ---------- views ---------- */
 const CAPTIONS = {
-  chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force, along with the matching outline from the original chart. Click a quark or lepton to see which forces act on it.',
+  chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force, along with the matching outline from the original chart. Click a quark or lepton to see which bosons it exchanges.',
   layers: 'Each force is a layer: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block in each layer it feels. Quarks feel all four and form full cubes. Neutrinos have only a thin weak block, and the photon has none.'
 };
 function setView(v, animate) {
