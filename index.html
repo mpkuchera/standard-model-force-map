@@ -81,36 +81,19 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
 .status .how{color:var(--muted);font-size:13px}
 .tile.dim{opacity:.16}
 
-/* ---- 3D layers ---- */
-.stage{position:relative;height:clamp(340px,58vw,520px);border-radius:18px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 28%,#FFFFFF,#EDF2FB 75%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+/* ---- 3D layers (three.js) ---- */
+.stage{position:relative;height:clamp(280px,62vw,580px);border-radius:18px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 30%,#FFFFFF,#EAF0FA 80%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .stage.dragging{cursor:grabbing}
-.pivot{position:absolute;left:54%;top:52%;perspective:1700px;perspective-origin:50% 40%}
-.scene,.lift{position:absolute;inset:0;transform-style:preserve-3d}
-.floor{position:absolute;border-radius:20px;background:#FFFFFF;border:1px solid #D2DCEE;transform:translateZ(-1px)}
-.t3{position:absolute;border:4px solid var(--c2);border-radius:10px;background:#fff;display:grid;place-items:center;font-size:22px;color:#7A879C;cursor:pointer;transition:background-color .25s,opacity .25s}
-.t3.carrier{background:var(--c1);color:#000;box-shadow:0 0 0 3px #112233}
-.t3.sel{box-shadow:0 0 0 3px #112233}
-.box{position:absolute;transform-style:preserve-3d;pointer-events:none}
-.box.slab{pointer-events:auto;cursor:pointer}
-.fc{position:absolute;left:0;top:0;display:block;transition:opacity .25s}
-.fc.top{width:100%;height:100%}
-.fc.fy{transform-origin:0 0;transform:rotateX(90deg)}
-.fc.fx{transform-origin:0 0;transform:rotateY(-90deg)}
-.slab .top{background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:inset 0 0 0 1px rgb(255 255 255 / .55)}
-.slab .fy{background:color-mix(in oklab,var(--c2) 86%,#000)}
-.slab .fx{background:color-mix(in oklab,var(--c2) 70%,#000)}
-.slab.dim .fc{opacity:.1}
-.ghost .fc{border:1.5px dashed #B8C4DA}
-.bb{position:absolute;left:0;top:0;font-size:22px;line-height:1;color:#000;white-space:nowrap;cursor:pointer;padding:2px 4px;transition:opacity .25s}
-.bb.dim{opacity:.25}
-.legend3d{position:absolute;left:12px;top:12px;display:grid;gap:3px;padding:8px;border-radius:16px;background:rgb(255 255 255 / .92);border:1.5px solid var(--line)}
-.legend3d .lt{font-size:11.5px;font-weight:700;color:var(--ink-2);padding:0 6px 2px}
-.band{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:3px 8px 3px 4px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left}
-.band .lvl{display:grid;gap:1.5px;width:14px;flex:none}
-.band .lvl i{display:block;height:3px;border-radius:1px;background:#D2DCEE}
-.band .lvl i.on{background:var(--ink)}
-.band[aria-pressed="true"]{background:var(--pill)}
+.stage.hovering{cursor:pointer}
+.stage canvas{display:block;width:100%;height:100%}
+.tip{position:absolute;left:0;top:0;pointer-events:none;background:#fff;border:2.5px solid var(--c2,var(--line));border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.4;box-shadow:0 6px 20px rgb(17 34 51 / .14);width:max-content;max-width:250px}
+.tip b{font-size:14px;color:var(--ink-2)}
+.tip .tm{color:var(--muted);font-variant-numeric:tabular-nums}
+.tip .tl{margin-top:4px;color:var(--ink)}
 .hint{position:absolute;right:14px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.stage-msg{position:absolute;inset:0;margin:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
+.explode{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:3px 12px;border:1.5px solid var(--line);border-radius:999px;background:#fff}
+.explode input{width:110px;accent-color:#112233}
 
 /* ---- picker + detail ---- */
 .ball{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(150deg,var(--c1),var(--c2));box-shadow:0 0 0 3px rgb(255 255 255 / .8),0 0 0 4px rgb(17 34 51 / .06);font-size:18px;line-height:1;color:#000;flex:none}
@@ -192,6 +175,7 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
           <button type="button" id="v-layers" data-view="layers" aria-pressed="false">3D layers</button>
         </div>
         <div class="cams" id="cams" hidden>
+          <label class="explode" for="explode">Separate layers <input type="range" id="explode" min="0" max="1" step="0.01" value="0"></label>
           <button type="button" class="btn" id="cam-reset" data-cam="reset">Angled</button>
           <button type="button" class="btn" id="cam-top" data-cam="top">From above</button>
           <button type="button" class="btn" id="cam-side" data-cam="side">From the side</button>
@@ -204,9 +188,9 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
 
       <div id="layersView" hidden>
         <div class="stage" id="stage">
-          <div class="pivot" id="pivot"><div class="scene" id="scene"><div class="lift" id="lift"></div></div></div>
-          <div class="legend3d" id="legend3d"></div>
-          <div class="hint">Drag to rotate</div>
+          <p class="stage-msg" id="stage-msg">Loading the 3D view…</p>
+          <div class="tip" id="tip" hidden></div>
+          <div class="hint">Drag to rotate · hover a block for details</div>
         </div>
       </div>
 
@@ -408,16 +392,20 @@ function statusHTML() {
     const n = P.filter(p => p.f[fi]).length;
     const car = list(F.carriers.map(c => lc(byId[c].title)));
     return `<span>Showing the <b>${F.title.toLowerCase()}</b>: ${n} of 17 particles feel it.</span>`
-      + `<span class="how">Bright tiles feel it, faded tiles don't. The CARRIER badge marks the ${car}.</span>`;
+      + (state.view === 'layers'
+        ? `<span class="how">Only its sheet stays solid. Arcs run from the ${car} to every particle that feels it.</span>`
+        : `<span class="how">Bright tiles feel it, faded tiles don't. The CARRIER badge marks the ${car}.</span>`);
   }
   if (state.mode === 'particle') {
     const s = byId[state.pid];
     const felt = FK.filter((k, i) => s.f[i]);
     if (!felt.length) return `<span>Showing the <b>${lc(s.title)}</b>: it feels none of these interactions directly.</span>`
       + `<span class="how">It carries electromagnetism but has no charge of its own, so every other tile is faded.</span>`;
-    const names = list(felt.map(k => FORCES[k].name.toLowerCase()));
+    const names = list(felt.map(k => k === 'higgs' ? 'Higgs' : FORCES[k].name.toLowerCase()));
     return `<span>Showing the <b>${lc(s.title)}</b>: it feels ${felt.length === 4 ? 'all four interactions' : names}.</span>`
-      + `<span class="how">Badges mark the bosons it can exchange, labeled by force. Faded tiles are other particles.</span>`;
+      + (state.view === 'layers'
+        ? `<span class="how">On each sheet it feels, an arc runs to the boson it exchanges there. Everything else fades.</span>`
+        : `<span class="how">Badges mark the bosons it can exchange, labeled by force. Faded tiles are other particles.</span>`);
   }
   return `<span>Pick a force carrier or a particle to see who interacts with whom.</span>`;
 }
@@ -445,122 +433,18 @@ function renderChart() {
   $('#status').innerHTML = statusHTML();
 }
 
-/* ---------- 3D layers ---------- */
-const C = 72, G = 16, EX = 22, SH = C / 4, TOP = C;
-const cx = c => c * (C + G) + (c >= 3 ? EX : 0);
-const cy = r => r * (C + G);
-const W3 = cx(4) + C, D3 = cy(3) + C;
-const scene = $('#scene'), lift = $('#lift'), pivot = $('#pivot'), stage = $('#stage');
-
-function box(x, y, z, w, d, hh, cls, attrs = '') {
-  return `<div class="box ${cls}" ${attrs} style="left:${x}px;top:${y}px;width:${w}px;height:${d}px;transform:translateZ(${z}px)">`
-    + `<i class="fc top" style="transform:translateZ(${hh}px)"></i>`
-    + `<i class="fc fy" style="top:0;width:${w}px;height:${hh}px"></i>`
-    + `<i class="fc fy" style="top:${d}px;width:${w}px;height:${hh}px"></i>`
-    + `<i class="fc fx" style="left:0;width:${hh}px;height:${d}px"></i>`
-    + `<i class="fc fx" style="left:${w}px;width:${hh}px;height:${d}px"></i></div>`;
+/* ---------- 3D layers: drawn by the three.js module at the end of the page ---------- */
+function render3D() { if (window.SM3D) window.SM3D.update(); }
+function activatePid(id) {
+  const p = byId[id];
+  if (p.mediates) selectForce(p.mediates, p.id);
+  else selectParticle(p.id);
 }
-
-function build3D() {
-  pivot.style.width = W3 + 'px'; pivot.style.height = D3 + 'px';
-  pivot.style.marginLeft = -W3 / 2 + 'px'; pivot.style.marginTop = -D3 / 2 + 'px';
-  let s = `<div class="floor" style="left:-18px;top:-18px;width:${W3 + 36}px;height:${D3 + 36}px"></div>`;
-  for (const p of P) {
-    const x = cx(p.col), y = cy(p.row);
-    s += `<div class="t3 c${p.c}" data-pid="${p.id}" data-src="3d" style="left:${x}px;top:${y}px;width:${C}px;height:${C}px">${symHTML(p)}</div>`;
-    if (p.f.some(v => !v)) s += box(x - 1, y - 1, 0, C + 2, C + 2, TOP + 1, 'ghost');
-    p.f.forEach((on, k) => {
-      if (on) s += box(x, y, k * SH + 1, C, C, SH - 2, `slab c${p.c}`, `data-pid="${p.id}" data-src="3d" data-k="${k}"`);
-    });
-    s += `<div class="bb" data-pid="${p.id}" data-src="3d" style="transform:translate3d(${x + C / 2}px,${y + C / 2}px,${TOP + 10}px) rotateZ(calc(var(--az) * -1)) rotateX(calc(var(--ax) * -1)) translate(-50%,-100%)">${symHTML(p)}</div>`;
-  }
-  lift.innerHTML = s;
-  $('#legend3d').innerHTML = `<div class="lt">layers, top to bottom</div>` + [3, 2, 1, 0].map(i =>
-    `<button type="button" class="band" data-force="${FK[i]}" aria-pressed="false"><span class="lvl" aria-hidden="true">${[3, 2, 1, 0].map(j => `<i${j === i ? ' class="on"' : ''}></i>`).join('')}</span>${FORCES[FK[i]].name}</button>`).join('');
-}
-
-function render3D() {
-  const fi = state.mode === 'force' ? FK.indexOf(state.force) : -1;
-  const sel = state.mode === 'particle' ? state.pid : null;
-  lift.querySelectorAll('.slab').forEach(b => {
-    b.classList.toggle('dim', fi >= 0 ? +b.dataset.k !== fi : sel ? b.dataset.pid !== sel : false);
-  });
-  lift.querySelectorAll('.t3').forEach(t => {
-    const p = byId[t.dataset.pid];
-    t.classList.toggle('carrier', fi >= 0 ? p.mediates === state.force : !!sel && linked(byId[sel], p));
-    t.classList.toggle('sel', p.id === sel);
-  });
-  lift.querySelectorAll('.bb').forEach(b => {
-    const p = byId[b.dataset.pid];
-    b.classList.toggle('dim', fi >= 0 ? !p.f[fi] && p.mediates !== state.force : sel ? p.id !== sel && !linked(byId[sel], p) : false);
-  });
-  document.querySelectorAll('#legend3d .band').forEach(b => b.setAttribute('aria-pressed', String(fi >= 0 && b.dataset.force === state.force)));
-}
-
-const HOME = { ax: 56, az: -28 };
-const cam = { ax: HOME.ax, az: HOME.az, lift: 1 };
-const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-function applyCam() {
-  scene.style.setProperty('--ax', cam.ax + 'deg');
-  scene.style.setProperty('--az', cam.az + 'deg');
-  scene.style.transform = `rotateX(${cam.ax}deg) rotateZ(${cam.az}deg) translateZ(${-TOP / 2}px)`;
-  lift.style.transform = `scale3d(1,1,${cam.lift})`;
-}
-let anim = 0;
-function tween(to, ms = 900) {
-  cancelAnimationFrame(anim);
-  cam.az = ((cam.az % 360) + 540) % 360 - 180;
-  if (reduced()) { Object.assign(cam, to); applyCam(); return; }
-  const from = { ...cam }, t0 = performance.now();
-  const step = now => {
-    const t = Math.min(1, (now - t0) / ms);
-    const e = t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-    for (const k in to) cam[k] = from[k] + (to[k] - from[k]) * e;
-    applyCam();
-    if (t < 1) anim = requestAnimationFrame(step);
-  };
-  anim = requestAnimationFrame(step);
-}
-const CAMS = { reset: HOME, top: { ax: 0, az: 0 }, side: { ax: 80, az: -14 } };
-
-function fit() {
-  const w = stage.clientWidth, h = stage.clientHeight;
-  if (!w) return;
-  pivot.style.transform = `scale(${Math.min(1, w / (W3 * 1.36), h / (D3 * 1.5))})`;
-}
-new ResizeObserver(fit).observe(stage);
-
-let drag = null, suppress = false;
-stage.addEventListener('pointerdown', e => {
-  if (e.button !== 0) return;
-  drag = { x: e.clientX, y: e.clientY, ax: cam.ax, az: cam.az, moved: false };
-});
-stage.addEventListener('pointermove', e => {
-  if (!drag) return;
-  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
-  if (!drag.moved && Math.hypot(dx, dy) > 5) {
-    drag.moved = true;
-    cancelAnimationFrame(anim);
-    stage.setPointerCapture(e.pointerId);
-    stage.classList.add('dragging');
-  }
-  if (drag.moved) {
-    cam.az = drag.az - dx * 0.45;
-    cam.ax = Math.max(0, Math.min(88, drag.ax - dy * 0.35));
-    applyCam();
-  }
-});
-const endDrag = () => {
-  if (drag && drag.moved) { suppress = true; setTimeout(() => { suppress = false; }, 0); }
-  drag = null; stage.classList.remove('dragging');
-};
-stage.addEventListener('pointerup', endDrag);
-stage.addEventListener('pointercancel', endDrag);
 
 /* ---------- views ---------- */
 const CAPTIONS = {
   chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force, along with the matching outline from the original chart. Click a quark or lepton to see which bosons it exchanges.',
-  layers: 'Each force is a layer: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block in each layer it feels. Quarks feel all four and form full cubes. Neutrinos have only a thin weak block, and the photon has none.'
+  layers: 'Each force is a glass sheet: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block on every sheet whose force it feels and an empty slot where it doesn\'t, so quarks stack into full cubes. Drag Separate layers to pull the sheets apart into four maps, and hover any block or slot to see why.'
 };
 function setView(v, animate) {
   state.view = v;
@@ -569,12 +453,13 @@ function setView(v, animate) {
   $('#cams').hidden = v !== 'layers';
   document.querySelectorAll('[data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === v)));
   $('#caption').textContent = CAPTIONS[v];
+  $('#status').innerHTML = statusHTML();
   if (v === 'layers') {
-    fit();
-    if (animate && !reduced()) {
-      Object.assign(cam, { ax: 0, az: 0, lift: 0.02 }); applyCam();
-      requestAnimationFrame(() => tween({ ax: HOME.ax, az: HOME.az, lift: 1 }, 1400));
-    } else { Object.assign(cam, { ...HOME, lift: 1 }); applyCam(); }
+    if (window.SM3D) window.SM3D.show(animate);
+    else setTimeout(() => {
+      const m = document.getElementById('stage-msg');
+      if (!window.SM3D && m) m.textContent = 'The 3D view could not load. Check your connection and reload the page.';
+    }, 8000);
   }
   try { localStorage.setItem('smfm-view', v); } catch (e) {}
 }
@@ -683,17 +568,14 @@ function render() {
 
 /* ---------- events ---------- */
 function activate(t) {
-  if (t.dataset.src === '3d' && suppress) return;
   if (t.hasAttribute('data-clear')) return clearSel();
   if (t.dataset.view) { if (t.dataset.view !== state.view) setView(t.dataset.view, true); return; }
-  if (t.dataset.cam) return tween(CAMS[t.dataset.cam], 800);
+  if (t.dataset.cam) return window.SM3D && window.SM3D.camera(t.dataset.cam);
   if (t.dataset.force) return selectForce(t.dataset.force, t.dataset.via);
-  const p = byId[t.dataset.pid];
-  if (t.dataset.src !== 'chip' && p.mediates) selectForce(p.mediates, p.id);
-  else selectParticle(p.id);
+  if (t.dataset.src === 'chip') selectParticle(t.dataset.pid);
+  else activatePid(t.dataset.pid);
 }
 document.addEventListener('click', e => {
-  if (suppress && e.target.closest('#stage')) return;
   const t = e.target.closest('[data-pid],[data-force],[data-view],[data-cam],[data-clear]');
   if (t) activate(t);
 });
@@ -708,15 +590,394 @@ document.addEventListener('keydown', e => {
 });
 
 buildChart();
-build3D();
 buildPicker();
-applyCam();
+window.SM = { P, FK, FORCES, byId, state, reason, selectForce, activatePid };
 let startView = 'chart';
 try { if (localStorage.getItem('smfm-view') === 'layers') startView = 'layers'; } catch (e) {}
 if (location.hash === '#layers') startView = 'layers';
 setView(startView, false);
 render();
 })();
+</script>
+<script type="module">
+import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.186.1/three.module.min.js';
+
+const SM = window.SM;
+const { P, FK, FORCES, byId, state } = SM;
+const stage = document.getElementById('stage');
+const tip = document.getElementById('tip');
+const layersView = document.getElementById('layersView');
+const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
+const CAT = { q: ['#EEBBFF', '#AA77DD'], l: ['#AAEE77', '#66CC33'], g: ['#FF9977', '#DD5544'], s: ['#EEE677', '#EEBB33'] };
+
+/* ---- renderer, camera, lights ---- */
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+} catch (e) {
+  document.getElementById('stage-msg').textContent = 'The 3D view needs WebGL, which is turned off in this browser.';
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+stage.prepend(renderer.domElement);
+document.getElementById('stage-msg').remove();
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(30, 1, 0.1, 100);
+scene.add(new THREE.HemisphereLight(0xffffff, 0xd4deef, 2.4));
+const sun = new THREE.DirectionalLight(0xffffff, 1.9);
+sun.position.set(-3.5, 9, 5.5);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+Object.assign(sun.shadow.camera, { left: -7, right: 7, top: 7, bottom: -7, near: 1, far: 30 });
+sun.shadow.bias = -0.0005;
+sun.shadow.radius = 5;
+scene.add(sun);
+
+/* ---- layout: same grid as the chart, one sheet per force ---- */
+const S = 1.14, TILE = 0.9, H = 0.26, GAPX = 0.32;
+const colX = c => c * S + (c >= 3 ? GAPX : 0);
+const X0 = colX(4) / 2, Z0 = 1.5 * S;
+const px = p => colX(p.col) - X0, pz = p => p.row * S - Z0;
+const GRID_W = colX(4) + TILE, GRID_D = 3 * S + TILE;
+
+function rr(Cls, w, d, r) {
+  const s = new Cls(), x = -w / 2, y = -d / 2;
+  s.moveTo(x + r, y); s.lineTo(x + w - r, y); s.quadraticCurveTo(x + w, y, x + w, y + r);
+  s.lineTo(x + w, y + d - r); s.quadraticCurveTo(x + w, y + d, x + w - r, y + d);
+  s.lineTo(x + r, y + d); s.quadraticCurveTo(x, y + d, x, y + d - r);
+  s.lineTo(x, y + r); s.quadraticCurveTo(x, y, x + r, y);
+  return s;
+}
+const flat = g => { g.rotateX(-Math.PI / 2); return g; };
+function ringGeo(size, width, r) {
+  const s = rr(THREE.Shape, size, size, r);
+  s.holes.push(rr(THREE.Path, size - 2 * width, size - 2 * width, Math.max(0.01, r - width)));
+  return flat(new THREE.ShapeGeometry(s, 6));
+}
+const slabGeo = flat(new THREE.ExtrudeGeometry(rr(THREE.Shape, TILE, TILE, 0.1), { depth: 1, bevelEnabled: false, curveSegments: 6 }));
+const socketGeo = ringGeo(TILE, 0.03, 0.1);
+const carrierGeo = ringGeo(TILE + 0.16, 0.05, 0.17);
+const decalGeo = flat(new THREE.PlaneGeometry(0.8, 0.8));
+
+/* ---- textures: the chart's ball + symbol, and a faded symbol for empty slots ---- */
+const aniso = renderer.capabilities.getMaxAnisotropy();
+function canvasTex(c) {
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = aniso;
+  return t;
+}
+function circle(g, x, y, r) { g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill(); }
+function symbolTex(p, ghost) {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const g = c.getContext('2d');
+  if (!ghost) {
+    const [a, b] = CAT[p.c];
+    g.fillStyle = 'rgba(255,255,255,.35)'; circle(g, 128, 128, 104); circle(g, 128, 128, 97);
+    const grd = g.createLinearGradient(84, 64, 172, 204);
+    grd.addColorStop(0, a); grd.addColorStop(1, b);
+    g.fillStyle = grd; circle(g, 128, 128, 90);
+  }
+  g.fillStyle = ghost ? 'rgba(59,79,107,.5)' : '#000';
+  const main = p.greek ? '124px "Times New Roman", Times, serif' : '108px Arial, Helvetica, sans-serif';
+  const small = '68px "Times New Roman", Times, serif';
+  g.font = main;
+  if (p.sub) {
+    const mw = g.measureText(p.sym).width;
+    g.font = small; const sw = g.measureText(p.sub).width;
+    const x0 = 128 - (mw + sw) / 2;
+    g.textAlign = 'left';
+    g.font = main; g.fillText(p.sym, x0, 160);
+    g.font = small; g.fillText(p.sub, x0 + mw, 182);
+  } else {
+    g.textAlign = 'center';
+    g.fillText(p.sym, 128, /[A-Z]/.test(p.sym) ? 166 : 160);
+  }
+  return canvasTex(c);
+}
+
+/* ---- scene objects ---- */
+const ground = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.ShadowMaterial({ opacity: 0.1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.03; ground.receiveShadow = true;
+scene.add(ground);
+
+const sheets = [], labels = [], cells = [], rings = [], arcGroups = [], pickables = [];
+const sheetShape = rr(THREE.Shape, GRID_W + 0.5, GRID_D + 0.5, 0.24);
+const sheetGeo = flat(new THREE.ShapeGeometry(sheetShape, 8));
+const edgePts = sheetShape.getPoints(8).map(v => new THREE.Vector3(v.x, 0, -v.y));
+
+function makeLabel(k) {
+  const c = document.createElement('canvas'); c.width = 768; c.height = 128;
+  const t = canvasTex(c);
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(2.16, 0.36), new THREE.MeshBasicMaterial({ map: t, transparent: true, depthWrite: false, toneMapped: false }));
+  mesh.renderOrder = 10;
+  mesh.userData = { force: FK[k] };
+  return { mesh, c, t, k, on: null };
+}
+function drawLabel(L, on) {
+  if (L.on === on) return;
+  L.on = on;
+  const g = L.c.getContext('2d');
+  g.clearRect(0, 0, 768, 128);
+  g.font = '700 58px system-ui, -apple-system, "Segoe UI", Roboto, sans-serif';
+  const text = FORCES[FK[L.k]].name, w = g.measureText(text).width + 64, x = 768 - w - 6;
+  g.beginPath(); g.roundRect(x, 16, w, 96, 48);
+  g.fillStyle = on ? '#112233' : 'rgba(255,255,255,.94)'; g.fill();
+  g.lineWidth = 5; g.strokeStyle = on ? '#112233' : '#C9D4E8'; g.stroke();
+  g.fillStyle = on ? '#FFFFFF' : '#3B4F6B'; g.textBaseline = 'middle';
+  g.fillText(text, x + 32, 66);
+  L.t.needsUpdate = true;
+}
+
+for (let k = 0; k < 4; k++) {
+  const mat = new THREE.MeshStandardMaterial({ color: 0xCCDDFF, transparent: true, opacity: 0.16, roughness: 0.3, side: THREE.DoubleSide, depthWrite: false });
+  const g = new THREE.Group();
+  g.add(new THREE.Mesh(sheetGeo, mat));
+  const edge = new THREE.LineLoop(new THREE.BufferGeometry().setFromPoints(edgePts), new THREE.LineBasicMaterial({ color: 0x8FA5CC, transparent: true, opacity: 0.6 }));
+  g.add(edge);
+  scene.add(g);
+  sheets.push({ g, mat, edge });
+  const L = makeLabel(k); drawLabel(L, false);
+  scene.add(L.mesh); labels.push(L); pickables.push(L.mesh);
+  const ag = new THREE.Group(); scene.add(ag); arcGroups.push(ag);
+}
+
+for (const p of P) {
+  const color = new THREE.Color(CAT[p.c][0]).lerp(new THREE.Color(CAT[p.c][1]), 0.55);
+  const full = symbolTex(p, false), ghost = symbolTex(p, true);
+  FK.forEach((fk, k) => {
+    const ud = { pid: p.id, k };
+    const decal = new THREE.Mesh(decalGeo, new THREE.MeshBasicMaterial({ map: p.f[k] ? full : ghost, transparent: true, depthWrite: false, toneMapped: false }));
+    decal.userData = ud; decal.renderOrder = 2;
+    scene.add(decal); pickables.push(decal);
+    if (p.f[k]) {
+      const mat = new THREE.MeshStandardMaterial({ color, roughness: 0.55 });
+      const mesh = new THREE.Mesh(slabGeo, mat);
+      mesh.castShadow = mesh.receiveShadow = true;
+      mesh.userData = ud;
+      scene.add(mesh); pickables.push(mesh);
+      cells.push({ p, k, block: true, mesh, mat, decal });
+    } else {
+      const mesh = new THREE.Mesh(socketGeo, new THREE.MeshBasicMaterial({ color: 0x8C9BB5, transparent: true, opacity: 0.55, depthWrite: false }));
+      scene.add(mesh);
+      cells.push({ p, k, block: false, mesh, mat: mesh.material, decal });
+    }
+    if (p.mediates === fk) {
+      const ring = new THREE.Mesh(carrierGeo, new THREE.MeshBasicMaterial({ color: 0x112233, transparent: true, opacity: 0.4, depthWrite: false }));
+      scene.add(ring); rings.push({ p, k, mesh: ring });
+    }
+  });
+}
+
+/* ---- animated values ---- */
+const HOME = { th: 0.5, ph: 0.98 };
+const CAMS = { reset: HOME, top: { th: 0, ph: 0.04 }, side: { th: 0.18, ph: 1.44 } };
+const cam = { th: HOME.th, ph: HOME.ph, thT: HOME.th, phT: HOME.ph };
+const lift = { v: 1, t: 1 }, ex = { v: 0, t: 0 };
+const base = [0, 0, 0, 0];
+let bh = H, stackH = H * 4;
+
+function layout() {
+  const sp = (H + ex.v * 0.95) * lift.v;
+  bh = Math.max(0.002, H * 0.84 * lift.v);
+  for (let k = 0; k < 4; k++) base[k] = k * sp;
+  stackH = base[3] + bh;
+  sheets.forEach((s, k) => { s.g.position.y = base[k] - 0.004; });
+  labels.forEach((L, k) => L.mesh.position.set(-X0 - TILE / 2 - 1.2, base[k] + bh / 2, Z0 + TILE / 2 - 0.1));
+  arcGroups.forEach((g, k) => { g.position.y = base[k] + bh; });
+  for (const c of cells) {
+    const x = px(c.p), z = pz(c.p), b = base[c.k];
+    if (c.block) {
+      c.mesh.position.set(x, b, z); c.mesh.scale.y = bh;
+      c.decal.position.set(x, b + bh + 0.003, z);
+    } else {
+      c.mesh.position.set(x, b + 0.003, z);
+      c.decal.position.set(x, b + 0.005, z);
+    }
+  }
+  for (const r of rings) r.mesh.position.set(px(r.p), base[r.k] + 0.006, pz(r.p));
+}
+
+const tgt = new THREE.Vector3(), corner = new THREE.Vector3();
+// Fit the whole scene, labels included, by projecting its bounding-box corners and adjusting distance.
+function placeCamera() {
+  const xL = -X0 - TILE / 2 - 1.7, xR = X0 + TILE / 2 + 0.2, zB = -Z0 - TILE / 2 - 0.2, zF = Z0 + TILE / 2 + 0.2;
+  tgt.set((xL + xR) / 2, stackH / 2, 0);
+  const dir = new THREE.Vector3(Math.sin(cam.ph) * Math.sin(cam.th), Math.cos(cam.ph), Math.sin(cam.ph) * Math.cos(cam.th));
+  let dist = 12;
+  for (let i = 0; i < 10; i++) {
+    camera.position.copy(tgt).addScaledVector(dir, dist);
+    camera.lookAt(tgt);
+    camera.updateMatrixWorld();
+    let m = 0;
+    for (const x of [xL, xR]) for (const y of [0, stackH]) for (const z of [zB, zF]) {
+      corner.set(x, y, z).project(camera);
+      m = Math.max(m, Math.abs(corner.x), Math.abs(corner.y));
+    }
+    dist *= m / 0.95;
+  }
+  camera.position.copy(tgt).addScaledVector(dir, dist);
+  camera.lookAt(tgt);
+}
+
+/* ---- highlighting follows the page state ---- */
+function setOpacity(m, o) {
+  const t = o < 1;
+  if (m.transparent !== t) { m.transparent = t; m.needsUpdate = true; }
+  m.opacity = o; m.depthWrite = !t;
+}
+const arcMat = new THREE.MeshBasicMaterial({ color: 0x112233, transparent: true, opacity: 0.55 });
+function arc(a, b) {
+  const A = new THREE.Vector3(px(a), 0, pz(a)), B = new THREE.Vector3(px(b), 0, pz(b));
+  const M = A.clone().lerp(B, 0.5); M.y = 0.22 + A.distanceTo(B) * 0.16;
+  return new THREE.Mesh(new THREE.TubeGeometry(new THREE.QuadraticBezierCurve3(A, M, B), 32, 0.014, 6), arcMat);
+}
+
+function update() {
+  const fi = state.mode === 'force' ? FK.indexOf(state.force) : -1;
+  const sel = state.mode === 'particle' ? byId[state.pid] : null;
+  const carrierOn = c => c.p.mediates === FK[c.k] && sel.f[c.k];
+  for (const c of cells) {
+    const on = fi >= 0 ? c.k === fi : sel ? c.p === sel || carrierOn(c) : true;
+    if (c.block) {
+      setOpacity(c.mat, on ? 1 : 0.12);
+      c.mesh.castShadow = on;
+      c.decal.material.opacity = on ? 1 : 0.12;
+    } else {
+      c.mat.opacity = on ? 0.75 : 0.14;
+      c.decal.material.opacity = on ? 1 : 0.2;
+    }
+  }
+  for (const r of rings) {
+    const on = fi >= 0 ? r.k === fi : sel ? sel.f[r.k] : null;
+    r.mesh.material.opacity = on === null ? 0.4 : on ? 1 : 0.1;
+  }
+  sheets.forEach((s, k) => {
+    const o = fi >= 0 ? (k === fi ? 0.34 : 0.05) : sel ? (sel.f[k] ? 0.2 : 0.05) : 0.16;
+    s.mat.opacity = o; s.edge.material.opacity = Math.min(1, o * 3.5);
+  });
+  labels.forEach((L, k) => drawLabel(L, fi === k || (!!sel && !!sel.f[k])));
+  arcGroups.forEach(g => { g.children.forEach(m => m.geometry.dispose()); g.clear(); });
+  if (fi >= 0) {
+    const car = byId[state.via];
+    P.forEach(p => { if (p.f[fi] && p !== car) arcGroups[fi].add(arc(car, p)); });
+  } else if (sel) {
+    FK.forEach((fk, k) => {
+      if (sel.f[k]) FORCES[fk].carriers.forEach(id => { if (id !== sel.id) arcGroups[k].add(arc(sel, byId[id])); });
+    });
+  }
+}
+
+/* ---- render loop ---- */
+let running = false;
+function frame() {
+  const a = reduced() ? 1 : 0.14;
+  lift.v += (lift.t - lift.v) * a * 0.55;
+  ex.v += (ex.t - ex.v) * a;
+  cam.th += (cam.thT - cam.th) * a;
+  cam.ph += (cam.phT - cam.ph) * a;
+  layout();
+  ground.material.opacity = 0.1 * (1 - ex.v);
+  placeCamera();
+  labels.forEach(L => L.mesh.quaternion.copy(camera.quaternion));
+  renderer.render(scene, camera);
+  if (layersView.hidden) { renderer.setAnimationLoop(null); running = false; }
+}
+function start() { if (!running) { running = true; renderer.setAnimationLoop(frame); } }
+function resize() {
+  const w = stage.clientWidth, h = stage.clientHeight;
+  if (!w || !h) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+new ResizeObserver(resize).observe(stage);
+
+function show(animate) {
+  resize();
+  if (animate && !reduced()) { lift.v = 0.02; cam.th = 0; cam.ph = 0.04; }
+  else { lift.v = 1; cam.th = HOME.th; cam.ph = HOME.ph; }
+  lift.t = 1; cam.thT = HOME.th; cam.phT = HOME.ph;
+  start();
+}
+function setCamera(name) {
+  const c = CAMS[name];
+  const turn = Math.PI * 2;
+  cam.th = ((cam.th % turn) + turn) % turn;
+  if (cam.th > Math.PI) cam.th -= turn;
+  cam.thT = c.th; cam.phT = c.ph;
+  start();
+}
+document.getElementById('explode').addEventListener('input', e => { ex.t = +e.target.value; start(); });
+
+/* ---- pointer: drag to orbit, hover for details, click to select ---- */
+const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+function pick(e) {
+  const r = stage.getBoundingClientRect();
+  ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
+  ray.setFromCamera(ndc, camera);
+  const hits = ray.intersectObjects(pickables, false);
+  // Prefer a real block over an empty slot that happens to float in front of it.
+  const hit = hits.find(h => h.object.userData.force || byId[h.object.userData.pid].f[h.object.userData.k]) || hits[0];
+  return hit ? hit.object.userData : null;
+}
+const esc = s => s.replace(/</g, '&lt;');
+function hover(e) {
+  const u = pick(e);
+  stage.classList.toggle('hovering', !!u);
+  if (!u) { tip.hidden = true; return; }
+  if (u.force) {
+    tip.style.setProperty('--c2', 'var(--line)');
+    tip.innerHTML = `<b>${FORCES[u.force].title}</b><div class="tm">Click to show who feels it</div>`;
+  } else {
+    const p = byId[u.pid], fk = FK[u.k], y = !!p.f[u.k];
+    tip.style.setProperty('--c2', CAT[p.c][1]);
+    tip.innerHTML = `<b>${p.title}</b><div class="tm">${esc(p.m)} · charge ${p.q} · spin ${p.spin}</div>`
+      + `<div class="tl"><b style="font-size:12.5px">${FORCES[fk].name} layer:</b> ${y ? '✓ feels it.' : 'empty slot.'} ${SM.reason(p, fk)}</div>`;
+  }
+  const r = stage.getBoundingClientRect();
+  tip.hidden = false;
+  let x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
+  if (x + tip.offsetWidth > r.width - 8) x = e.clientX - r.left - tip.offsetWidth - 14;
+  if (y + tip.offsetHeight > r.height - 8) y = e.clientY - r.top - tip.offsetHeight - 14;
+  tip.style.transform = `translate(${Math.max(8, x)}px, ${Math.max(8, y)}px)`;
+}
+let drag = null;
+const el = renderer.domElement;
+el.addEventListener('pointerdown', e => {
+  if (e.button !== 0) return;
+  drag = { x: e.clientX, y: e.clientY, th: cam.thT, ph: cam.phT, moved: false };
+});
+el.addEventListener('pointermove', e => {
+  if (!drag) return hover(e);
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.moved && Math.hypot(dx, dy) > 5) {
+    drag.moved = true; tip.hidden = true;
+    el.setPointerCapture(e.pointerId);
+    stage.classList.add('dragging');
+  }
+  if (drag.moved) {
+    cam.thT = drag.th - dx * 0.009;
+    cam.phT = Math.max(0.04, Math.min(1.5, drag.ph - dy * 0.007));
+  }
+});
+el.addEventListener('pointerup', e => {
+  if (drag && !drag.moved) {
+    const u = pick(e);
+    if (u && u.force) SM.selectForce(u.force);
+    else if (u) SM.activatePid(u.pid);
+  }
+  drag = null; stage.classList.remove('dragging');
+});
+el.addEventListener('pointercancel', () => { drag = null; stage.classList.remove('dragging'); });
+el.addEventListener('pointerleave', () => { if (!drag) { tip.hidden = true; stage.classList.remove('hovering'); } });
+
+window.SM3D = { update, show, camera: setCamera };
+update();
+if (state.view === 'layers') show(false);
 </script>
 </body>
 </html>
