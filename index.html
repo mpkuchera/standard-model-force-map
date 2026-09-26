@@ -4,194 +4,170 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="description" content="Interactive Standard Model chart: pick a force carrier to highlight the particles that feel it, or view each force as a 3D layer.">
-<style>:root{color-scheme:light}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>Standard Model Force Map</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&family=Schibsted+Grotesk:wght@400;500;600;700&display=swap">
 <style>
 :root{
-  --bg:#F3F3F7; --surface:#FFFFFF; --surface-2:#ECECF2; --cell:#F8F8FB; --ink:#17172B; --muted:#5C5E78;
-  --line:#D7D8E4; --ghost:#B4B6CA; --stage:#E6E7EF; --stage-hi:#F8F8FC; --floor:#DCDDE8;
-  --strong:#D2335C; --em:#CF8A00; --weak:#2D6BE0; --higgs:#12946C;
-  --ui:'Schibsted Grotesk', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-  --sym:'STIX Two Text', 'Times New Roman', Times, serif;
-  --mono:'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
-}
-@media (prefers-color-scheme: dark){
-  :root:not([data-theme="light"]){
-    color-scheme:dark;
-    --bg:#0D0E1A; --surface:#161828; --surface-2:#1F2236; --cell:#1C1F33; --ink:#EAEAF5; --muted:#A0A2BE;
-    --line:#2E3150; --ghost:#4C5078; --stage:#0A0B16; --stage-hi:#1B1E35; --floor:#14162A;
-    --strong:#FF6A8D; --em:#F2B632; --weak:#6E9DFF; --higgs:#3DCB9C;
-  }
-}
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#0D0E1A; --surface:#161828; --surface-2:#1F2236; --cell:#1C1F33; --ink:#EAEAF5; --muted:#A0A2BE;
-  --line:#2E3150; --ghost:#4C5078; --stage:#0A0B16; --stage-hi:#1B1E35; --floor:#14162A;
-  --strong:#FF6A8D; --em:#F2B632; --weak:#6E9DFF; --higgs:#3DCB9C;
+  color-scheme:light;
+  --bg:#FFFFFF; --ink:#112233; --ink-2:#001122; --muted:#5A6780; --line:#D9E1EF; --pill:#E6EEFF; --soft:#F5F8FE;
+  --q1:#EEBBFF; --q2:#AA77DD; --l1:#AAEE77; --l2:#66CC33; --g1:#FF9977; --g2:#DD5544; --s1:#EEE677; --s2:#EEBB33;
+  --ui:system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  --latin:Arial, Helvetica, sans-serif;
+  --greek:'Times New Roman', Times, serif;
 }
 *{box-sizing:border-box}
+html{background:var(--bg)}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--ui);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+img{max-width:100%}
+[hidden]{display:none!important}
 button{font:inherit;color:inherit}
-:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
-sub,sup{font-size:.55em;line-height:0}
+:focus-visible{outline:3px solid #3366CC;outline-offset:2px}
+sub,sup{font-size:.62em;line-height:0}
 a{color:inherit}
+.cq{--c1:var(--q1);--c2:var(--q2)} .cl{--c1:var(--l1);--c2:var(--l2)} .cg{--c1:var(--g1);--c2:var(--g2)} .cs{--c1:var(--s1);--c2:var(--s2)}
+.lt{font-family:var(--latin)} .gk{font-family:var(--greek);font-size:1.12em}
 
-.wrap{max-width:1200px;margin:0 auto;padding-inline:20px;padding-block:32px 56px}
-header{display:grid;gap:10px;margin-bottom:24px}
-.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
-h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;margin:0;font-weight:700;text-wrap:balance}
-.lede{margin:0;max-width:64ch;color:var(--muted);font-size:16px}
+.wrap{max-width:1240px;margin:0 auto;padding-inline:20px;padding-block:28px 56px}
+header{display:grid;gap:8px;justify-items:center;text-align:center;margin-bottom:22px}
+h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0;font-weight:700;color:#000;text-wrap:balance}
+.lede{margin:0;max-width:66ch;color:var(--muted);font-size:16px;text-wrap:balance}
 
-.layout{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);grid-template-areas:"board picker" "board detail";grid-template-rows:auto 1fr;gap:16px 24px;align-items:start}
-.board{grid-area:board}
-.picker{grid-area:picker}
+.layout{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);grid-template-areas:"board picker" "board detail";grid-template-rows:auto 1fr;gap:16px 28px;align-items:start}
+.board{grid-area:board;display:grid;gap:12px;min-width:0}
+.picker{grid-area:picker;display:grid;gap:8px}
 .detail{grid-area:detail;display:grid;gap:14px;min-width:0}
-@media (max-width:940px){
+@media (max-width:960px){
   .layout{grid-template-columns:minmax(0,1fr);grid-template-areas:"picker" "board" "detail";grid-template-rows:auto}
 }
 
-/* board */
-.board{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:16px;display:grid;gap:14px;min-width:0}
+.pill{justify-self:start;display:inline-block;background:var(--pill);color:var(--ink-2);font-weight:700;font-size:12.5px;line-height:1.3;padding:4px 12px;border-radius:999px}
 .toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
-.seg{display:inline-flex;background:var(--surface-2);border-radius:10px;padding:3px;gap:2px}
-.seg button{font-size:13.5px;font-weight:600;border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
-.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgb(0 0 0 / .14)}
-.tag3d{font-family:var(--mono);font-size:10px;font-weight:500;padding:1px 5px;border-radius:4px;background:var(--ink);color:var(--surface)}
+.seg{display:inline-flex;background:var(--pill);border-radius:999px;padding:3px;gap:2px}
+.seg button{font-size:13.5px;font-weight:700;border:0;background:transparent;color:var(--muted);padding:6px 16px;border-radius:999px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:#fff;color:var(--ink-2);box-shadow:0 1px 3px rgb(17 34 51 / .18)}
 .cams{display:flex;gap:6px;flex-wrap:wrap}
-.btn{font-size:12.5px;font-weight:500;border:1px solid var(--line);background:var(--surface);padding:6px 10px;border-radius:8px;cursor:pointer}
-.btn:hover{background:var(--surface-2)}
-.caption{margin:0;font-size:13.5px;color:var(--muted);max-width:72ch}
+.btn{font-size:12.5px;font-weight:600;border:1.5px solid var(--line);background:#fff;padding:5px 12px;border-radius:999px;cursor:pointer}
+.btn:hover{background:var(--soft)}
+.caption{margin:0;font-size:13.5px;color:var(--muted);max-width:74ch}
 
-/* 2D chart */
-.chart{display:grid;grid-template-columns:18px repeat(3,minmax(0,1fr)) 4px repeat(2,minmax(0,1fr));gap:6px}
-.colhead{grid-row:1;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:center;align-self:end;line-height:1.2;padding-bottom:2px}
-.rowhead{grid-column:1;writing-mode:vertical-rl;transform:rotate(180deg);font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);display:flex;align-items:center;justify-content:center;border-left:1.5px solid var(--line);margin-block:6px}
-.cell{text-align:left;position:relative;aspect-ratio:1;max-width:100%;container-type:inline-size;border:1.5px solid var(--line);border-radius:10px;background:var(--cell);cursor:pointer;padding:0;transition:opacity .2s,border-color .2s,background-color .2s,box-shadow .2s,transform .15s}
-.cell:hover{transform:translateY(-1px);border-color:var(--ghost)}
-.cell .meta{position:absolute;left:8cqi;top:7cqi;display:grid;font-family:var(--mono);font-size:clamp(7px,8.4cqi,11px);line-height:1.3;color:var(--muted);white-space:nowrap}
-.cell .tag{display:none;position:absolute;left:8cqi;top:7cqi;font-family:var(--mono);font-size:clamp(7px,8.4cqi,11px);letter-spacing:.06em;text-transform:uppercase;color:var(--ink);font-weight:500}
-.cell .sym{position:absolute;left:0;right:0;top:45%;transform:translateY(-50%);text-align:center;font-family:var(--sym);font-size:36cqi;line-height:1}
-.cell .nm{position:absolute;left:4cqi;right:4cqi;bottom:7cqi;text-align:center;font-size:clamp(8px,10.5cqi,13px);font-weight:500;line-height:1.1}
-.pips{position:absolute;right:8cqi;top:8cqi;display:grid;gap:3.5cqi}
-.pip{display:block;width:clamp(5px,7.5cqi,9px);aspect-ratio:1;border-radius:50%;border:1.5px solid var(--fc);background:transparent;transition:box-shadow .2s}
-.pip.y{background:var(--fc)}
-.pip.hot{box-shadow:0 0 0 2px var(--cell),0 0 0 3.5px var(--fc)}
-@container (max-width:96px){ .u2{display:none} }
-@container (max-width:76px){ .cell .meta,.cell .tag{display:none!important} .cell .sym{top:42%} }
+/* ---- 2D chart (geometry and styles follow the Wikimedia original) ---- */
+.chart svg{display:block;width:100%;height:auto;max-width:100%}
+.pmass,.pchar,.pspin{font-size:24px;fill:#1a1a1a}
+.psymr{font-size:64px;text-anchor:middle;font-family:var(--latin)}
+.psymg{font-size:72px;text-anchor:middle;font-family:var(--greek)}
+.pname{font-size:42px;font-weight:bold;text-anchor:middle;fill:#001122}
+.pnam2{font-size:36px;font-weight:bold;text-anchor:middle;fill:#001122}
+.txcol{font-size:30px;font-weight:bold;text-anchor:middle;fill:#001122}
+.pinteract{fill-opacity:.03;fill:#E6CC01;stroke:#772222;stroke-miterlimit:10;stroke-opacity:.15;stroke-width:1;transition:fill-opacity .25s,stroke-opacity .25s,stroke-width .25s}
+.pinteract.on{fill-opacity:.16;stroke-opacity:.8;stroke-width:3}
+.pballglow{opacity:.25;fill:#FFFFFF}
+.columnbox{opacity:.5;fill:#CCDDFF}
+.txlept{fill:#55CC22;font-size:54px;font-weight:bold}
+.txquar{fill:#CC99FF;font-size:54px;font-weight:bold}
+.txgabo{fill:#FF6C6C;font-size:54px;font-weight:bold}
+.txvebo{fill:#FF6C6C;font-size:36px;font-weight:bold}
+.txscbo{fill:#EEBB33;font-size:54px;font-weight:bold}
+.tile{cursor:pointer;transition:opacity .2s}
+.tile:focus{outline:none}
+.tile .ring{fill:none;stroke:#112233;stroke-width:6;opacity:0;transition:opacity .2s}
+.tile:hover .ring{opacity:.25}
+.tile:focus-visible .ring{opacity:1;stroke:#3366CC}
+.tile.sel .ring,.tile.carrier .ring{opacity:1}
+.tile.link .ring{opacity:1;stroke-dasharray:18 10}
+.tile .badge{opacity:0;transition:opacity .2s}
+.tile.carrier .badge{opacity:1}
+.tile.dim{opacity:.16}
+.tile.fade{opacity:.35}
 
-.cell.on{border-color:var(--fc);background:color-mix(in oklab,var(--fc) 9%,var(--cell))}
-.cell.off{opacity:.3}
-.cell.carrier{opacity:1;border-width:2px;border-color:var(--fc);background:color-mix(in oklab,var(--fc) 22%,var(--cell));box-shadow:0 0 0 3px color-mix(in oklab,var(--fc) 28%,transparent)}
-.cell.carrier.off{border-style:dashed}
-.cell.carrier .meta{visibility:hidden}
-.cell.carrier .tag{display:block}
-.cell.sel{border-width:2px;border-color:var(--ink);box-shadow:0 0 0 3px color-mix(in oklab,var(--ink) 18%,transparent)}
-.cell.link{border-width:2px;border-color:var(--fc);background:color-mix(in oklab,var(--fc) 14%,var(--cell))}
-.cell.fade{opacity:.42}
-
-.key{grid-column:7;grid-row:3 / 6;container-type:inline-size;border:1.5px dashed var(--line);border-radius:10px;padding:9cqi;font-size:clamp(8px,12cqi,11.5px);line-height:1.3;color:var(--muted);display:flex;flex-direction:column;gap:10px;overflow:hidden}
-.key .k-h{font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--ink)}
-.key .k-meta{display:grid;font-family:var(--mono)}
-.key .k-pips{display:grid;gap:5px}
-.key .k-pips span{display:flex;align-items:center;gap:6px}
-.key .pip{width:8px}
-.key{min-width:0;min-height:0}
-@media (max-width:620px){ .key{display:none} }
-
-/* 3D stage */
-.stage{position:relative;height:clamp(340px,58vw,500px);border-radius:12px;background:radial-gradient(ellipse at 50% 30%,var(--stage-hi),var(--stage) 72%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+/* ---- 3D layers ---- */
+.stage{position:relative;height:clamp(340px,58vw,520px);border-radius:18px;border:1px solid var(--line);background:radial-gradient(ellipse at 50% 28%,#FFFFFF,#EDF2FB 75%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .stage.dragging{cursor:grabbing}
-.pivot{position:absolute;left:50%;top:47%;perspective:1700px;perspective-origin:50% 40%}
+.pivot{position:absolute;left:54%;top:52%;perspective:1700px;perspective-origin:50% 40%}
 .scene,.lift{position:absolute;inset:0;transform-style:preserve-3d}
-.floor{position:absolute;border-radius:18px;background:var(--floor);border:1px solid var(--line);transform:translateZ(-1px)}
-.tile{position:absolute;border:1px solid var(--line);border-radius:6px;background:var(--cell);display:grid;place-items:center;font-family:var(--sym);font-size:22px;color:var(--muted);cursor:pointer;transition:background-color .25s,border-color .25s,opacity .25s}
-.tile.carrier{background:color-mix(in oklab,var(--fc) 45%,var(--cell));border-color:var(--fc);color:var(--ink)}
-.tile.sel{border:2px solid var(--ink)}
+.floor{position:absolute;border-radius:20px;background:#FFFFFF;border:1px solid #D2DCEE;transform:translateZ(-1px)}
+.t3{position:absolute;border:4px solid var(--c2);border-radius:10px;background:#fff;display:grid;place-items:center;font-size:22px;color:#7A879C;cursor:pointer;transition:background-color .25s,opacity .25s}
+.t3.carrier{background:var(--c1);color:#000;box-shadow:0 0 0 3px #112233}
+.t3.sel{box-shadow:0 0 0 3px #112233}
 .box{position:absolute;transform-style:preserve-3d;pointer-events:none}
 .box.slab{pointer-events:auto;cursor:pointer}
 .fc{position:absolute;left:0;top:0;display:block;transition:opacity .25s}
 .fc.top{width:100%;height:100%}
 .fc.fy{transform-origin:0 0;transform:rotateX(90deg)}
 .fc.fx{transform-origin:0 0;transform:rotateY(-90deg)}
-.slab .top{background:var(--fc);box-shadow:inset 0 0 0 1px color-mix(in oklab,var(--fc) 70%,#fff)}
-.slab .fy{background:color-mix(in oklab,var(--fc) 80%,#000)}
-.slab .fx{background:color-mix(in oklab,var(--fc) 66%,#000)}
-.slab.dim .fc{opacity:.12}
-.ghost .fc{border:1px dashed var(--ghost);opacity:.8}
-.bb{position:absolute;left:0;top:0;font-family:var(--sym);font-size:21px;line-height:1;color:var(--ink);white-space:nowrap;cursor:pointer;padding:2px 4px;transition:opacity .25s}
-.bb.dim{opacity:.28}
-.legend3d{position:absolute;left:10px;top:10px;display:grid;gap:2px;padding:8px;border-radius:10px;background:color-mix(in oklab,var(--surface) 90%,transparent);border:1px solid var(--line)}
-.legend3d .lt{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 6px 2px}
-.legend3d button{font-size:12.5px;display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:3px 6px;border-radius:6px;cursor:pointer;text-align:left}
-.legend3d .sw{width:22px;height:8px;border-radius:2px;background:var(--fc);flex:none}
-.legend3d button[aria-pressed="true"]{background:color-mix(in oklab,var(--fc) 20%,transparent)}
-.hint{position:absolute;right:12px;bottom:10px;font-family:var(--mono);font-size:11px;color:var(--muted);pointer-events:none}
+.slab .top{background:linear-gradient(135deg,var(--c1),var(--c2));box-shadow:inset 0 0 0 1px rgb(255 255 255 / .55)}
+.slab .fy{background:color-mix(in oklab,var(--c2) 86%,#000)}
+.slab .fx{background:color-mix(in oklab,var(--c2) 70%,#000)}
+.slab.dim .fc{opacity:.1}
+.ghost .fc{border:1.5px dashed #B8C4DA}
+.bb{position:absolute;left:0;top:0;font-size:22px;line-height:1;color:#000;white-space:nowrap;cursor:pointer;padding:2px 4px;transition:opacity .25s}
+.bb.dim{opacity:.25}
+.legend3d{position:absolute;left:12px;top:12px;display:grid;gap:3px;padding:8px;border-radius:16px;background:rgb(255 255 255 / .92);border:1.5px solid var(--line)}
+.legend3d .lt{font-size:11.5px;font-weight:700;color:var(--ink-2);padding:0 6px 2px}
+.band{display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:3px 8px 3px 4px;border-radius:999px;font-size:12.5px;font-weight:600;color:var(--ink-2);cursor:pointer;text-align:left}
+.band .lvl{display:grid;gap:1.5px;width:14px;flex:none}
+.band .lvl i{display:block;height:3px;border-radius:1px;background:#D2DCEE}
+.band .lvl i.on{background:var(--ink)}
+.band[aria-pressed="true"]{background:var(--pill)}
+.hint{position:absolute;right:14px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
 
-/* picker + detail */
-.picker{display:grid;gap:8px}
+/* ---- picker + detail ---- */
+.ball{width:30px;height:30px;border-radius:50%;display:inline-grid;place-items:center;background:linear-gradient(150deg,var(--c1),var(--c2));box-shadow:0 0 0 3px rgb(255 255 255 / .8),0 0 0 4px rgb(17 34 51 / .06);font-size:18px;line-height:1;color:#000;flex:none}
+.ball.sm{width:22px;height:22px;font-size:13px}
+.ball.lg{width:38px;height:38px;font-size:22px}
+.balls{display:inline-flex;gap:4px}
 .forces{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.fbtn{text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;transition:border-color .2s,background-color .2s}
-.fbtn:hover{border-color:var(--fc)}
-.fbtn .sw{width:14px;height:14px;border-radius:3px;background:var(--fc)}
-.fbtn .fn{font-weight:600;font-size:14px;line-height:1.2;hyphens:manual}
-.fbtn .fm{font-family:var(--sym);font-size:18px;color:var(--muted);line-height:1}
-.fbtn[aria-pressed="true"]{border-color:var(--fc);background:color-mix(in oklab,var(--fc) 11%,var(--surface))}
-.fbtn[aria-pressed="true"] .fm{color:var(--ink)}
+.fbtn{text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:10px;padding:9px 12px;border:3px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;transition:border-color .2s,background-color .2s}
+.fbtn:hover{border-color:var(--c1)}
+.fbtn .fn{font-weight:700;font-size:14.5px;line-height:1.2;color:var(--ink-2);hyphens:manual}
+.fbtn[aria-pressed="true"]{border-color:var(--c2);background:color-mix(in oklab,var(--c1) 16%,#fff)}
 
-.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:20px;display:grid;gap:16px;min-width:0}
+.card{background:#fff;border:3px solid var(--line);border-radius:22px;padding:20px;display:grid;gap:16px;min-width:0}
+.card.cg,.card.cs,.card.cq,.card.cl{border-color:color-mix(in oklab,var(--c2) 55%,#fff)}
 .chead{display:flex;justify-content:space-between;align-items:center;gap:8px}
 .linkbtn{border:0;background:none;padding:2px 0;color:var(--muted);font-size:12.5px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-.card h2{margin:0;font-size:24px;letter-spacing:-.015em;line-height:1.15;display:flex;align-items:center;gap:10px;text-wrap:balance}
-.card h2 .sw{width:16px;height:16px;border-radius:4px;background:var(--fc);flex:none}
-.card h3{margin:0 0 8px;font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:500}
+.card h2{margin:0;font-size:25px;line-height:1.15;display:flex;align-items:center;gap:12px;color:var(--ink-2);text-wrap:balance}
+.card h3{margin:0 0 8px;font-size:12.5px;font-weight:700;color:var(--ink-2)}
 .card p{margin:0}
-.does{font-size:15px}
 .facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;font-size:13.5px}
 .facts dt{color:var(--muted)}
 .facts dd{margin:0}
-.vertex{margin:0;background:var(--surface-2);border-radius:12px;padding:10px 12px 12px;display:grid;gap:4px}
+.vertex{margin:0;background:var(--soft);border-radius:16px;padding:10px 12px 12px;display:grid;gap:4px}
 .vertex svg{width:100%;max-width:280px;height:auto;display:block;margin:0 auto}
 .vertex figcaption{font-size:13px;color:var(--muted);text-align:center;text-wrap:balance}
 .v-f{stroke:var(--ink);stroke-width:1.8;fill:none}
-.v-b{stroke:var(--fc);stroke-width:2.2;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.v-b{stroke:var(--c2);stroke-width:2.6;fill:none;stroke-linecap:round;stroke-linejoin:round}
 .v-arrow,.v-dot{fill:var(--ink)}
-.v-t{font-family:var(--sym);font-size:18px;fill:var(--ink)}
+.v-t{font-size:18px;fill:var(--ink)}
 .carriers{display:grid;gap:6px}
-.crow{display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;text-align:left}
-.crow.via{border-color:var(--fc);background:color-mix(in oklab,var(--fc) 9%,var(--surface))}
-.crow .csym{font-family:var(--sym);font-size:28px;line-height:1;text-align:center}
-.crow b{font-weight:600;font-size:14px;display:block}
-.cstats{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.crow{display:grid;grid-template-columns:auto 1fr;gap:12px;align-items:center;padding:8px 12px;border:3px solid var(--line);border-radius:16px;background:#fff;cursor:pointer;text-align:left}
+.crow.via{border-color:var(--c2)}
+.crow b{font-weight:700;font-size:14px;display:block;color:var(--ink-2)}
+.cstats{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .cnote{font-size:13px;color:var(--muted);margin-top:8px!important}
 .chips{display:flex;flex-wrap:wrap;gap:6px}
-.chip{display:inline-flex;align-items:baseline;gap:6px;padding:3px 10px 4px;border:1px solid var(--line);border-radius:999px;background:var(--surface);cursor:pointer;font-size:12.5px}
-.chip:hover{border-color:var(--ghost)}
-.chip b{font-family:var(--sym);font-weight:400;font-size:16px}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 4px;border:2.5px solid var(--c2);border-radius:10px;background:#fff;cursor:pointer;font-size:12.5px;font-weight:600;color:var(--ink-2)}
+.chip:hover{background:color-mix(in oklab,var(--c1) 22%,#fff)}
 .nogroup{display:grid;gap:6px}
 .nogroup + .nogroup{margin-top:12px}
 .nogroup p{font-size:13px;color:var(--muted)}
+.zonenote{font-size:12.5px;color:var(--muted);background:var(--soft);border-radius:12px;padding:8px 12px}
 
 .phead{display:grid;grid-template-columns:auto 1fr;gap:14px;align-items:center}
-.bigsym{font-family:var(--sym);font-size:42px;line-height:1;width:72px;height:72px;display:grid;place-items:center;border:1.5px solid var(--line);border-radius:12px;background:var(--cell)}
-.stats{font-family:var(--mono);font-size:12px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:4px}
+.minitile{width:84px;height:84px;border:6px solid var(--c2);border-radius:14px;display:grid;place-items:center;background:#fff}
+.minitile .ball{width:50px;height:50px;font-size:30px}
+.stats{font-size:12.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:2px 14px;margin-top:4px;font-variant-numeric:tabular-nums}
 .feels{list-style:none;margin:0;padding:0;display:grid;gap:6px}
-.feels button{width:100%;text-align:left;display:grid;grid-template-columns:14px 1fr auto;gap:2px 10px;align-items:start;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer}
-.feels button:hover{border-color:var(--fc)}
-.feels .sw{width:14px;height:14px;border-radius:3px;margin-top:3px;border:1.5px solid var(--fc)}
-.feels .yes .sw{background:var(--fc)}
-.feels .fnm{font-weight:600;font-size:14px}
-.feels .st{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);padding-top:3px}
-.feels .yes .st{color:var(--ink)}
+.feels button{width:100%;text-align:left;display:grid;grid-template-columns:auto 1fr auto;gap:2px 10px;align-items:center;padding:8px 12px;border:2px solid var(--line);border-radius:14px;background:#fff;cursor:pointer}
+.feels button:hover{border-color:var(--c2)}
+.feels .fnm{font-weight:700;font-size:14px;color:var(--ink-2)}
+.feels .st{font-size:12px;font-weight:700;color:var(--ink-2)}
 .feels .why{grid-column:2 / 4;font-size:13px;color:var(--muted)}
-.feels .no{background:transparent}
-.feels .no .fnm{color:var(--muted);font-weight:500}
-.fact{padding-top:14px;border-top:1px solid var(--line);font-size:14px}
+.feels .no{background:var(--soft);border-style:dashed}
+.feels .no .ball{opacity:.45}
+.feels .no .fnm,.feels .no .st{color:var(--muted);font-weight:600}
+.fact{padding-top:14px;border-top:2px solid var(--line);font-size:14px}
 .note{margin:0;font-size:13px;color:var(--muted);padding-inline:4px;max-width:60ch}
-.note b{color:var(--ink);font-weight:600}
-.foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);max-width:90ch}
+.note b{color:var(--ink-2)}
+.foot{margin-top:32px;padding-top:16px;border-top:1px solid var(--line);font-size:12.5px;color:var(--muted);max-width:95ch}
 
 @media (prefers-reduced-motion: reduce){ *{transition:none!important} }
 </style>
@@ -199,9 +175,8 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow">Particle physics · 17 particles · 4 interactions</div>
-    <h1>Standard Model Force Map</h1>
-    <p class="lede">Click a force carrier to see every particle that feels its force. Switch to the 3D view to stack each force as its own layer. A particle gets a block in every layer it feels, so its square becomes a tower.</p>
+    <h1>Standard Model of Elementary Particles</h1>
+    <p class="lede">Click a force carrier to see every particle that feels its force. Switch to the 3D view to stack each force as its own layer, so every square becomes a tower of the forces that particle feels.</p>
   </header>
 
   <div class="layout">
@@ -209,7 +184,7 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
       <div class="toolbar">
         <div class="seg" role="group" aria-label="View">
           <button type="button" id="v-chart" data-view="chart" aria-pressed="true">Chart</button>
-          <button type="button" id="v-layers" data-view="layers" aria-pressed="false">Layers <span class="tag3d">3D</span></button>
+          <button type="button" id="v-layers" data-view="layers" aria-pressed="false">3D layers</button>
         </div>
         <div class="cams" id="cams" hidden>
           <button type="button" class="btn" id="cam-reset" data-cam="reset">Angled</button>
@@ -218,9 +193,7 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
         </div>
       </div>
 
-      <div id="chartView">
-        <div class="chart" id="chart"></div>
-      </div>
+      <div id="chartView" class="chart"></div>
 
       <div id="layersView" hidden>
         <div class="stage" id="stage">
@@ -234,7 +207,7 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
     </section>
 
     <section class="picker" aria-label="Choose an interaction">
-      <div class="eyebrow">Pick an interaction</div>
+      <span class="pill">interactions / force carriers</span>
       <div class="forces" id="forces"></div>
     </section>
 
@@ -245,8 +218,7 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
   </div>
 
   <footer class="foot">
-    Masses from the Particle Data Group 2024 review; neutrino values are upper limits. Layout follows the
-    <a href="https://commons.wikimedia.org/wiki/File:Standard_Model_of_Elementary_Particles.svg">Standard Model chart on Wikimedia Commons</a>.
+    Chart design follows <a href="https://commons.wikimedia.org/wiki/File:Standard_Model_of_Elementary_Particles.svg">Standard Model of Elementary Particles</a> by Cush on Wikimedia Commons (public domain, CC0), including its masses, colors and force outlines.
     The Higgs interaction appears beside the three forces because it has its own boson, though it is not usually counted as a fundamental force.
   </footer>
 </div>
@@ -255,10 +227,11 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
 (() => {
 const $ = s => document.querySelector(s);
 const FK = ['strong', 'em', 'weak', 'higgs'];
+const CAT = { quark: 'q', lepton: 'l', gauge: 'g', scalar: 's' };
 
 const FORCES = {
   strong: {
-    key: 'strong', name: 'Strong', title: 'Strong force', carriers: ['g'],
+    key: 'strong', name: 'Strong', title: 'Strong force', carriers: ['g'], cat: 'gauge',
     couplesTo: 'Color charge', range: '≈ 10⁻¹⁵ m, about the width of a proton',
     strength: 'Strongest of the four. Roughly 100× electromagnetism at nuclear distances.',
     does: 'Binds quarks into protons, neutrons and other hadrons. Leftover strong force between them holds atomic nuclei together.',
@@ -266,56 +239,61 @@ const FORCES = {
     vertex: { kind: 'gluon', a: 'q', b: 'q', x: 'g', caption: 'A quark emits a gluon and changes color.' }
   },
   em: {
-    key: 'em', name: 'Electromagnetic', label: 'Electro&shy;magnetic', title: 'Electromagnetic force', carriers: ['gamma'],
+    key: 'em', name: 'Electromagnetic', label: 'Electro&shy;magnetic', title: 'Electromagnetic force', carriers: ['gamma'], cat: 'gauge',
     couplesTo: 'Electric charge', range: 'Infinite, weakening as 1/r²',
     strength: 'Fine-structure constant α ≈ 1/137',
     does: 'Holds electrons in atoms and atoms in molecules. It is behind light, electricity, magnetism and all of chemistry.',
     note: 'The photon has no charge, so it carries electromagnetism without feeling it. Two beams of light pass straight through each other.',
+    zoneNote: 'The shaded outline is the one from the original chart. The W boson sits outside it but lights up too, because it has electric charge.',
     vertex: { kind: 'wave', a: 'e⁻', b: 'e⁻', x: 'γ', caption: 'An electron emits or absorbs a photon.' }
   },
   weak: {
-    key: 'weak', name: 'Weak', title: 'Weak force', carriers: ['W', 'Z'],
+    key: 'weak', name: 'Weak', title: 'Weak force', carriers: ['W', 'Z'], cat: 'gauge',
     couplesTo: 'Weak isospin', range: '≈ 10⁻¹⁸ m',
     strength: 'Feeble at everyday energies because W and Z are heavy. Near 100 GeV it is about as strong as electromagnetism.',
     does: 'The only force that turns one kind of quark or lepton into another. It drives beta decay and the fusion that powers the Sun.',
     note: 'W bosons carry electric charge, so they also feel electromagnetism. The Z is neutral.',
+    zoneNote: 'The shaded outline is the one from the original chart. The Higgs sits outside it but lights up too, because it couples to W and Z.',
     vertex: { kind: 'wave', a: 'd', b: 'u', x: 'W⁻', caption: 'A down quark emits a W⁻ and becomes an up quark. This is the first step of neutron beta decay.' }
   },
   higgs: {
-    key: 'higgs', name: 'Higgs', title: 'Higgs interaction', carriers: ['H'],
+    key: 'higgs', name: 'Higgs', title: 'Higgs interaction', carriers: ['H'], cat: 'scalar',
     couplesTo: 'Mass (Yukawa coupling)', range: '≈ 10⁻¹⁸ m',
     strength: 'Proportional to mass: about 1 for the top quark, 3 × 10⁻⁶ for the electron.',
     does: 'Particles that interact with the Higgs field gain mass. It is not usually counted as a fundamental force, but it is a real interaction carried by a real boson.',
     note: 'The Higgs is the only known elementary particle with spin 0.',
+    zoneNote: 'The original chart draws no outline for the Higgs, so only the tiles light up.',
     vertex: { kind: 'dash', a: 't', b: 't', x: 'H', caption: 'A top quark couples to the Higgs more strongly than any other particle.' }
   }
 };
 
-// f = [strong, em, weak, higgs]
+// x, y: tile position in the original chart. f = [strong, em, weak, higgs]
 const P = [
-  { id:'u', sym:'u', name:'up', title:'Up quark', cat:'quark', gen:1, row:0, col:0, m:'2.16', u:'MeV', q:'⅔', spin:'½', f:[1,1,1,1], fact:'Two up quarks and one down quark make a proton.' },
-  { id:'c', sym:'c', name:'charm', title:'Charm quark', cat:'quark', gen:2, row:0, col:1, m:'1.273', u:'GeV', q:'⅔', spin:'½', f:[1,1,1,1], fact:'Found in 1974 at SLAC and Brookhaven at the same time, inside the J/ψ meson.' },
-  { id:'t', sym:'t', name:'top', title:'Top quark', cat:'quark', gen:3, row:0, col:2, m:'172.57', u:'GeV', q:'⅔', spin:'½', f:[1,1,1,1], fact:'The heaviest known elementary particle, about as heavy as a whole tungsten atom. It decays in about 5 × 10⁻²⁵ s, too fast to form hadrons. Found at Fermilab in 1995.' },
-  { id:'d', sym:'d', name:'down', title:'Down quark', cat:'quark', gen:1, row:1, col:0, m:'4.70', u:'MeV', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'One up quark and two down quarks make a neutron.' },
-  { id:'s', sym:'s', name:'strange', title:'Strange quark', cat:'quark', gen:2, row:1, col:1, m:'93.5', u:'MeV', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'Named for the unexpectedly long lifetimes of kaons, first seen in cosmic rays in 1947.' },
-  { id:'b', sym:'b', name:'bottom', title:'Bottom quark', cat:'quark', gen:3, row:1, col:2, m:'4.183', u:'GeV', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'Discovered at Fermilab in 1977 inside the upsilon (ϒ) meson.' },
-  { id:'e', sym:'e', name:'electron', title:'Electron', cat:'lepton', gen:1, row:2, col:0, m:'0.511', u:'MeV', q:'−1', spin:'½', f:[0,1,1,1], fact:'Discovered by J. J. Thomson in 1897. It is stable and forms the outer part of every atom.' },
-  { id:'mu', sym:'μ', name:'muon', title:'Muon', cat:'lepton', gen:2, row:2, col:1, m:'105.66', u:'MeV', q:'−1', spin:'½', f:[0,1,1,1], fact:'About 207 times heavier than the electron, with a lifetime of 2.2 μs. Cosmic-ray muons reach the ground only because of time dilation.' },
-  { id:'tau', sym:'τ', name:'tau', title:'Tau', cat:'lepton', gen:3, row:2, col:2, m:'1.777', u:'GeV', q:'−1', spin:'½', f:[0,1,1,1], fact:'Discovered at SLAC in 1975. It is the only lepton heavy enough to decay into hadrons.' },
-  { id:'ve', sym:'ν<sub>e</sub>', name:'electron neutrino', title:'Electron neutrino', cat:'lepton', nu:true, gen:1, row:3, col:0, m:'< 0.8', u:'eV', q:'0', spin:'½', f:[0,0,1,0], fact:'About 65 billion neutrinos from the Sun pass through every square centimeter of Earth each second.' },
-  { id:'vmu', sym:'ν<sub>μ</sub>', name:'muon neutrino', title:'Muon neutrino', cat:'lepton', nu:true, gen:2, row:3, col:1, m:'< 0.17', u:'MeV', q:'0', spin:'½', f:[0,0,1,0], fact:'Discovered at Brookhaven in 1962 by Lederman, Schwartz and Steinberger.' },
-  { id:'vtau', sym:'ν<sub>τ</sub>', name:'tau neutrino', title:'Tau neutrino', cat:'lepton', nu:true, gen:3, row:3, col:2, m:'< 18.2', u:'MeV', q:'0', spin:'½', f:[0,0,1,0], fact:'The last lepton to be seen directly, by the DONUT experiment at Fermilab in 2000.' },
-  { id:'g', sym:'g', name:'gluon', title:'Gluon', cat:'gauge', row:0, col:3, m:'0', q:'0', spin:'1', f:[1,0,0,0], mediates:'strong', fact:'There are eight gluons, each carrying a color and an anticolor. First seen in three-jet collisions at DESY in 1979.' },
-  { id:'gamma', sym:'γ', name:'photon', title:'Photon', cat:'gauge', row:1, col:3, m:'0', q:'0', spin:'1', f:[0,0,0,0], mediates:'em', fact:'The quantum of light. It is massless, which is why electromagnetism reaches across the universe.' },
-  { id:'Z', sym:'Z', name:'Z boson', title:'Z boson', cat:'gauge', row:2, col:3, m:'91.19', u:'GeV', q:'0', spin:'1', f:[0,0,1,1], mediates:'weak', fact:'Discovered at CERN in 1983. It lets neutrinos bounce off matter without changing identity.' },
-  { id:'W', sym:'W<sup>±</sup>', name:'W boson', title:'W boson', cat:'gauge', row:3, col:3, m:'80.37', u:'GeV', q:'±1', spin:'1', f:[0,1,1,1], mediates:'weak', fact:'Comes as W⁺ and W⁻. Discovered at CERN in 1983. Every change of quark or lepton flavor goes through a W.' },
-  { id:'H', sym:'H', name:'Higgs', title:'Higgs boson', cat:'scalar', row:0, col:4, m:'125.2', u:'GeV', q:'0', spin:'0', f:[0,0,1,1], mediates:'higgs', fact:'Discovered at CERN by the ATLAS and CMS experiments in 2012, 48 years after it was predicted.' }
+  { id:'u', sym:'u', name:'up', title:'Up quark', cat:'quark', gen:1, x:100, y:275, m:'≈2.16 MeV/c²', q:'⅔', spin:'½', f:[1,1,1,1], fact:'Two up quarks and one down quark make a proton.' },
+  { id:'c', sym:'c', name:'charm', title:'Charm quark', cat:'quark', gen:2, x:350, y:275, m:'≈1.273 GeV/c²', q:'⅔', spin:'½', f:[1,1,1,1], fact:'Found in 1974 at SLAC and Brookhaven at the same time, inside the J/ψ meson.' },
+  { id:'t', sym:'t', name:'top', title:'Top quark', cat:'quark', gen:3, x:600, y:275, m:'≈172.57 GeV/c²', q:'⅔', spin:'½', f:[1,1,1,1], fact:'The heaviest known elementary particle, about as heavy as a whole tungsten atom. It decays in about 5 × 10⁻²⁵ s, too fast to form hadrons. Found at Fermilab in 1995.' },
+  { id:'d', sym:'d', name:'down', title:'Down quark', cat:'quark', gen:1, x:100, y:525, m:'≈4.7 MeV/c²', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'One up quark and two down quarks make a neutron.' },
+  { id:'s', sym:'s', name:'strange', title:'Strange quark', cat:'quark', gen:2, x:350, y:525, m:'≈93.5 MeV/c²', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'Named for the unexpectedly long lifetimes of kaons, first seen in cosmic rays in 1947.' },
+  { id:'b', sym:'b', name:'bottom', title:'Bottom quark', cat:'quark', gen:3, x:600, y:525, m:'≈4.183 GeV/c²', q:'−⅓', spin:'½', f:[1,1,1,1], fact:'Discovered at Fermilab in 1977 inside the upsilon (ϒ) meson.' },
+  { id:'e', sym:'e', name:'electron', title:'Electron', cat:'lepton', gen:1, x:100, y:790, m:'≈0.511 MeV/c²', q:'−1', spin:'½', f:[0,1,1,1], fact:'Discovered by J. J. Thomson in 1897. It is stable and forms the outer part of every atom.' },
+  { id:'mu', sym:'μ', greek:true, name:'muon', title:'Muon', cat:'lepton', gen:2, x:350, y:790, m:'≈105.66 MeV/c²', q:'−1', spin:'½', f:[0,1,1,1], fact:'About 207 times heavier than the electron, with a lifetime of 2.2 μs. Cosmic-ray muons reach the ground only because of time dilation.' },
+  { id:'tau', sym:'τ', greek:true, name:'tau', title:'Tau', cat:'lepton', gen:3, x:600, y:790, m:'≈1.77693 GeV/c²', q:'−1', spin:'½', f:[0,1,1,1], fact:'Discovered at SLAC in 1975. It is the only lepton heavy enough to decay into hadrons.' },
+  { id:'ve', sym:'ν', sub:'e', greek:true, name:'electron neutrino', name2:['electron','neutrino'], title:'Electron neutrino', cat:'lepton', nu:true, gen:1, x:100, y:1040, m:'<0.8 eV/c²', q:'0', spin:'½', f:[0,0,1,0], fact:'About 65 billion neutrinos from the Sun pass through every square centimeter of Earth each second.' },
+  { id:'vmu', sym:'ν', sub:'μ', greek:true, name:'muon neutrino', name2:['muon','neutrino'], title:'Muon neutrino', cat:'lepton', nu:true, gen:2, x:350, y:1040, m:'<0.17 MeV/c²', q:'0', spin:'½', f:[0,0,1,0], fact:'Discovered at Brookhaven in 1962 by Lederman, Schwartz and Steinberger.' },
+  { id:'vtau', sym:'ν', sub:'τ', greek:true, name:'tau neutrino', name2:['tau','neutrino'], title:'Tau neutrino', cat:'lepton', nu:true, gen:3, x:600, y:1040, m:'<18.2 MeV/c²', q:'0', spin:'½', f:[0,0,1,0], fact:'The last lepton to be seen directly, by the DONUT experiment at Fermilab in 2000.' },
+  { id:'g', sym:'g', name:'gluon', title:'Gluon', cat:'gauge', x:860, y:275, m:'0', q:'0', spin:'1', f:[1,0,0,0], mediates:'strong', fact:'There are eight gluons, each carrying a color and an anticolor. First seen in three-jet collisions at DESY in 1979.' },
+  { id:'gamma', sym:'γ', greek:true, name:'photon', title:'Photon', cat:'gauge', x:860, y:525, m:'0', q:'0', spin:'1', f:[0,0,0,0], mediates:'em', fact:'The quantum of light. It is massless, which is why electromagnetism reaches across the universe.' },
+  { id:'Z', sym:'Z', name:'Z boson', title:'Z boson', cat:'gauge', x:860, y:790, m:'≈91.188 GeV/c²', q:'0', spin:'1', f:[0,0,1,1], mediates:'weak', fact:'Discovered at CERN in 1983. It lets neutrinos bounce off matter without changing identity.' },
+  { id:'W', sym:'W', name:'W boson', title:'W boson', cat:'gauge', x:860, y:1040, m:'≈80.3692 GeV/c²', q:'±1', spin:'1', f:[0,1,1,1], mediates:'weak', fact:'Comes as W⁺ and W⁻. Discovered at CERN in 1983. Every change of quark or lepton flavor goes through a W.' },
+  { id:'H', sym:'H', name:'higgs', title:'Higgs boson', cat:'scalar', x:1120, y:275, m:'≈125.2 GeV/c²', q:'0', spin:'0', f:[0,0,1,1], mediates:'higgs', fact:'Discovered at CERN by the ATLAS and CMS experiments in 2012, 48 years after it was predicted.' }
 ];
+const COL = { 100: 0, 350: 1, 600: 2, 860: 3, 1120: 4 }, ROW = { 275: 0, 525: 1, 790: 2, 1040: 3 };
+P.forEach(p => { p.col = COL[p.x]; p.row = ROW[p.y]; p.c = CAT[p.cat]; });
 const byId = Object.fromEntries(P.map(p => [p.id, p]));
 
-const massHTML = p => p.m === '0' ? '0' : `${p.m} ${p.u}<span class="u2">/c²</span>`;
-const massText = p => p.m === '0' ? '0' : `${p.m} ${p.u}/c²`;
-const fcol = k => `var(--${k})`;
+const symHTML = p => `<span class="${p.greek ? 'gk' : 'lt'}">${p.sym}${p.sub ? `<sub>${p.sub}</sub>` : ''}</span>`;
+const ball = (p, size = '') => `<span class="ball c${p.c}${size ? ' ' + size : ''}">${symHTML(p)}</span>`;
+const esc = s => s.replace(/</g, '&lt;');
 
 function reason(p, k) {
   const y = !!p.f[FK.indexOf(k)];
@@ -362,46 +340,74 @@ function selectParticle(id) {
 }
 function clearSel() { state.mode = 'none'; render(); }
 
-/* ---------- 2D chart ---------- */
+/* ---------- 2D chart: rebuilt from the original SVG ---------- */
+function grad(id, a, b, x1, y1, x2, y2) {
+  return `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient>`;
+}
+function tileSVG(p) {
+  const sym = p.greek
+    ? `<text class="psymg" x="120" y="${p.sub ? 115 : 120}">${p.sym}${p.sub ? `<tspan dy="8" font-size="48">${p.sub}</tspan>` : ''}</text>`
+    : `<text class="psymr" x="120" y="120">${p.sym}</text>`;
+  const name = p.name2
+    ? `<text class="pnam2" transform="translate(120 200)"><tspan dy="-20">${p.name2[0]}</tspan><tspan x="0" dy="40">${p.name2[1]}</tspan></text>`
+    : `<text class="pname" x="120" y="200">${p.name}</text>`;
+  return `<g class="tile" id="t-${p.id}" data-pid="${p.id}" data-src="grid" transform="translate(${p.x} ${p.y})" tabindex="0" role="button"
+      aria-label="${p.title}. Mass ${esc(p.m)}, charge ${p.q}, spin ${p.spin}.">
+    <rect width="240" height="240" rx="25" fill="none" pointer-events="all"/>
+    <rect class="ring" x="-3" y="-3" width="246" height="246" rx="28"/>
+    <rect x="5" y="5" width="230" height="230" fill="none" stroke-width="10" rx="25" stroke="url(#lgb_${p.c})"/>
+    <circle cx="120" cy="100" r="50.4" class="pballglow"/><circle cx="120" cy="100" r="47.7" class="pballglow"/>
+    <circle cx="120" cy="100" r="45" fill="url(#lgp_${p.c})"/>
+    ${sym}
+    <text class="pmass" x="15" y="40">${esc(p.m)}</text><text class="pchar" x="15" y="80">${p.q}</text><text class="pspin" x="15" y="120">${p.spin}</text>
+    ${name}
+    <g class="badge"><rect x="126" y="-17" width="108" height="32" rx="16" fill="#112233"/><text x="180" y="6" text-anchor="middle" font-size="17" font-weight="bold" fill="#fff" letter-spacing="1.5">CARRIER</text></g>
+  </g>`;
+}
 function buildChart() {
-  let h = ['Gen I', 'Gen II', 'Gen III'].map((g, i) => `<div class="colhead" style="grid-column:${i + 2}">${g}</div>`).join('')
-    + `<div class="colhead" style="grid-column:6">Gauge<br>bosons</div><div class="colhead" style="grid-column:7">Scalar<br>boson</div>`
-    + `<div class="rowhead" style="grid-row:2 / 4">Quarks</div><div class="rowhead" style="grid-row:4 / 6">Leptons</div>`;
-  for (const p of P) {
-    const pips = [3, 2, 1, 0].map(i => `<i class="pip${p.f[i] ? ' y' : ''}" data-f="${FK[i]}" style="--fc:${fcol(FK[i])}"></i>`).join('');
-    const col = p.col < 3 ? p.col + 2 : p.col + 3;
-    h += `<button type="button" class="cell" id="cell-${p.id}" data-pid="${p.id}" data-src="grid" style="grid-row:${p.row + 2};grid-column:${col}"
-      aria-label="${p.title}. Mass ${massText(p)}, charge ${p.q}, spin ${p.spin}.">
-      <span class="meta"><span>${massHTML(p)}</span><span>${p.q}</span><span>${p.spin}</span></span>
-      <span class="tag">carrier</span>
-      <span class="pips" aria-hidden="true">${pips}</span>
-      <span class="sym">${p.sym}</span><span class="nm">${p.name}</span></button>`;
-  }
-  const kp = [3, 2, 1, 0].map(i => `<span><i class="pip y" style="--fc:${fcol(FK[i])}"></i>${['Strong', 'EM', 'Weak', 'Higgs'][i]}</span>`).join('');
-  h += `<div class="key" aria-hidden="true"><div class="k-h">Key</div>
-    <div class="k-meta"><span>mass</span><span>charge</span><span>spin</span></div>
-    <div class="k-pips">${kp}</div><div>Filled dot: feels that force</div></div>`;
-  $('#chart').innerHTML = h;
+  const C = [['q', '#EEBBFF', '#AA77DD'], ['l', '#AAEE77', '#66CC33'], ['g', '#FF9977', '#DD5544'], ['s', '#EEE677', '#EEBB33']];
+  const defs = C.map(([k, a, b]) => grad('lgb_' + k, a, b, 45, -15, 200, 250) + grad('lgp_' + k, a, b, 120, 60, 165, 140)).join('');
+  $('#chartView').innerHTML = `<svg viewBox="0 128 1380 1167" font-family="system-ui, sans-serif" role="group" aria-label="Standard Model chart">
+  <defs>${defs}</defs>
+  <g transform="translate(-20 0)">
+    <path id="z-strong" class="pinteract" d="M240.8,322.6c-30.4,0-55,24.6-55,55v250c0,30.4,24.6,55,55,55h500c30.4,0,55-24.6,55-55  c0-107.7,87.3-195,195-195h10c30.4,0,55-24.6,55-55c0-30.4-24.6-55-55-55H240.8"/>
+    <path id="z-em" class="pinteract" d="M240.8,312.6c-35.9,0-65,29.1-65,65v510c0,35.9,29.1,65,65,65h500c35.9,0,65-29.1,65-65  c0-107.7,82.8-195,185-195h10c35.9,0,65-29.1,65-65c0-35.9-29.1-65-65-65h-10c-102.2,0-185-82.8-185-185c0-35.9-29.1-65-65-65H240.8"/>
+    <path id="z-weak" class="pinteract" d="M240.8,302.6c-41.4,0-75,33.6-75,75v760c0,41.4,33.6,75,75,75h760c41.4,0,75-33.6,75-75v-250  c0-41.4-33.6-75-75-75h-10c-96.6,0-175-78.4-175-175v-260c0-41.4-33.6-75-75-75H240.8"/>
+  </g>
+  <rect class="columnbox" x="100" y="137.6" width="740" height="80" rx="30" ry="30"/>
+  <text class="txcol" transform="translate(470 166)">three generations of matter<tspan x="0" dy="36">(fermions)</tspan></text>
+  <g transform="translate(120 260)" fill="#112233" font-size="40" text-anchor="middle"><text x="100">I</text><text x="350">II</text><text x="600">III</text></g>
+  <rect class="columnbox" x="860" y="137.6" width="500" height="80" rx="30" ry="30"/>
+  <text class="txcol" transform="translate(1110 166)">interactions / force carriers<tspan x="0" dy="36">(bosons)</tspan></text>
+  <g transform="translate(85 315)" opacity="0.65" font-size="24" text-anchor="end"><text>mass</text><text y="40">charge</text><text y="80">spin</text></g>
+  <text class="txquar" transform="translate(70 770) rotate(-90)">QUARKS</text>
+  <text class="txlept" transform="translate(70 1270) rotate(-90)">LEPTONS</text>
+  <text class="txgabo" transform="translate(1170 1270) rotate(-90)">GAUGE BOSONS</text>
+  <text class="txvebo" transform="translate(1210 1270) rotate(-90)">VECTOR BOSONS</text>
+  <text class="txscbo" transform="translate(1350 530) rotate(-90)" text-anchor="end">SCALAR BOSONS</text>
+  ${P.map(tileSVG).join('')}
+</svg>`;
 }
 
 function renderChart() {
   const fi = FK.indexOf(state.force);
   const s = byId[state.pid];
-  document.querySelectorAll('#chart .cell').forEach(c => {
-    const p = byId[c.dataset.pid];
-    c.className = 'cell';
-    c.style.removeProperty('--fc');
-    c.querySelectorAll('.pip.hot').forEach(x => x.classList.remove('hot'));
+  const zonesOn = new Set();
+  if (state.mode === 'force') zonesOn.add(state.force);
+  if (state.mode === 'particle') FK.forEach((k, i) => { if (s.f[i]) zonesOn.add(k); });
+  ['strong', 'em', 'weak'].forEach(k => document.getElementById('z-' + k).classList.toggle('on', zonesOn.has(k)));
+  document.querySelectorAll('#chartView .tile').forEach(t => {
+    const p = byId[t.dataset.pid];
+    const cls = ['tile'];
     if (state.mode === 'force') {
-      c.style.setProperty('--fc', fcol(state.force));
-      c.classList.add(p.f[fi] ? 'on' : 'off');
-      if (p.mediates === state.force) c.classList.add('carrier');
-      if (p.f[fi]) c.querySelector(`.pip[data-f="${state.force}"]`).classList.add('hot');
+      if (p.mediates === state.force) cls.push('carrier');
+      else if (!p.f[fi]) cls.push('dim');
     } else if (state.mode === 'particle') {
-      if (p.id === s.id) c.classList.add('sel');
-      else if (p.mediates && s.f[FK.indexOf(p.mediates)]) { c.classList.add('link'); c.style.setProperty('--fc', fcol(p.mediates)); }
-      else c.classList.add('fade');
+      if (p.id === s.id) cls.push('sel');
+      else if (p.mediates && s.f[FK.indexOf(p.mediates)]) cls.push('link');
+      else cls.push('fade');
     }
+    t.setAttribute('class', cls.join(' '));
   });
 }
 
@@ -412,8 +418,8 @@ const cy = r => r * (C + G);
 const W3 = cx(4) + C, D3 = cy(3) + C;
 const scene = $('#scene'), lift = $('#lift'), pivot = $('#pivot'), stage = $('#stage');
 
-function box(x, y, z, w, d, hh, cls, attrs = '', style = '') {
-  return `<div class="box ${cls}" ${attrs} style="left:${x}px;top:${y}px;width:${w}px;height:${d}px;transform:translateZ(${z}px);${style}">`
+function box(x, y, z, w, d, hh, cls, attrs = '') {
+  return `<div class="box ${cls}" ${attrs} style="left:${x}px;top:${y}px;width:${w}px;height:${d}px;transform:translateZ(${z}px)">`
     + `<i class="fc top" style="transform:translateZ(${hh}px)"></i>`
     + `<i class="fc fy" style="top:0;width:${w}px;height:${hh}px"></i>`
     + `<i class="fc fy" style="top:${d}px;width:${w}px;height:${hh}px"></i>`
@@ -427,38 +433,34 @@ function build3D() {
   let s = `<div class="floor" style="left:-18px;top:-18px;width:${W3 + 36}px;height:${D3 + 36}px"></div>`;
   for (const p of P) {
     const x = cx(p.col), y = cy(p.row);
-    s += `<div class="tile" data-pid="${p.id}" data-src="3d" style="left:${x}px;top:${y}px;width:${C}px;height:${C}px">${p.sym}</div>`;
+    s += `<div class="t3 c${p.c}" data-pid="${p.id}" data-src="3d" style="left:${x}px;top:${y}px;width:${C}px;height:${C}px">${symHTML(p)}</div>`;
     if (p.f.some(v => !v)) s += box(x - 1, y - 1, 0, C + 2, C + 2, TOP + 1, 'ghost');
     p.f.forEach((on, k) => {
-      if (on) s += box(x, y, k * SH + 1, C, C, SH - 2, 'slab', `data-pid="${p.id}" data-src="3d" data-k="${k}"`, `--fc:${fcol(FK[k])}`);
+      if (on) s += box(x, y, k * SH + 1, C, C, SH - 2, `slab c${p.c}`, `data-pid="${p.id}" data-src="3d" data-k="${k}"`);
     });
-    s += `<div class="bb" data-pid="${p.id}" data-src="3d" style="transform:translate3d(${x + C / 2}px,${y + C / 2}px,${TOP + 10}px) rotateZ(calc(var(--az) * -1)) rotateX(calc(var(--ax) * -1)) translate(-50%,-100%)">${p.sym}</div>`;
+    s += `<div class="bb" data-pid="${p.id}" data-src="3d" style="transform:translate3d(${x + C / 2}px,${y + C / 2}px,${TOP + 10}px) rotateZ(calc(var(--az) * -1)) rotateX(calc(var(--ax) * -1)) translate(-50%,-100%)">${symHTML(p)}</div>`;
   }
   lift.innerHTML = s;
-  $('#legend3d').innerHTML = `<div class="lt">Layers</div>` + [3, 2, 1, 0].map(i =>
-    `<button type="button" data-force="${FK[i]}" style="--fc:${fcol(FK[i])}" aria-pressed="false"><span class="sw"></span>${FORCES[FK[i]].name}</button>`).join('');
+  $('#legend3d').innerHTML = `<div class="lt">layers, top to bottom</div>` + [3, 2, 1, 0].map(i =>
+    `<button type="button" class="band" data-force="${FK[i]}" aria-pressed="false"><span class="lvl" aria-hidden="true">${[3, 2, 1, 0].map(j => `<i${j === i ? ' class="on"' : ''}></i>`).join('')}</span>${FORCES[FK[i]].name}</button>`).join('');
 }
 
 function render3D() {
   const fi = state.mode === 'force' ? FK.indexOf(state.force) : -1;
   const sel = state.mode === 'particle' ? state.pid : null;
   lift.querySelectorAll('.slab').forEach(b => {
-    const k = +b.dataset.k;
-    b.classList.toggle('dim', fi >= 0 ? k !== fi : sel ? b.dataset.pid !== sel : false);
+    b.classList.toggle('dim', fi >= 0 ? +b.dataset.k !== fi : sel ? b.dataset.pid !== sel : false);
   });
-  lift.querySelectorAll('.tile').forEach(t => {
+  lift.querySelectorAll('.t3').forEach(t => {
     const p = byId[t.dataset.pid];
-    const car = fi >= 0 && p.mediates === state.force;
-    t.classList.toggle('carrier', car);
-    t.style.setProperty('--fc', car ? fcol(state.force) : 'transparent');
+    t.classList.toggle('carrier', fi >= 0 && p.mediates === state.force);
     t.classList.toggle('sel', p.id === sel);
   });
   lift.querySelectorAll('.bb').forEach(b => {
     const p = byId[b.dataset.pid];
     b.classList.toggle('dim', fi >= 0 ? !p.f[fi] && p.mediates !== state.force : sel ? p.id !== sel : false);
   });
-  document.querySelectorAll('#legend3d button').forEach(b =>
-    b.setAttribute('aria-pressed', String(state.mode === 'force' && b.dataset.force === state.force)));
+  document.querySelectorAll('#legend3d .band').forEach(b => b.setAttribute('aria-pressed', String(fi >= 0 && b.dataset.force === state.force)));
 }
 
 const HOME = { ax: 56, az: -28 };
@@ -490,14 +492,13 @@ const CAMS = { reset: HOME, top: { ax: 0, az: 0 }, side: { ax: 80, az: -14 } };
 function fit() {
   const w = stage.clientWidth, h = stage.clientHeight;
   if (!w) return;
-  const k = Math.min(1, w / (W3 * 1.36), h / (D3 * 1.5));
-  pivot.style.transform = `scale(${k})`;
+  pivot.style.transform = `scale(${Math.min(1, w / (W3 * 1.36), h / (D3 * 1.5))})`;
 }
 new ResizeObserver(fit).observe(stage);
 
 let drag = null, suppress = false;
 stage.addEventListener('pointerdown', e => {
-  if (e.button !== 0 || e.target.closest('.legend3d')) return;
+  if (e.button !== 0) return;
   drag = { x: e.clientX, y: e.clientY, ax: cam.ax, az: cam.az, moved: false };
 });
 stage.addEventListener('pointermove', e => {
@@ -524,7 +525,7 @@ stage.addEventListener('pointercancel', endDrag);
 
 /* ---------- views ---------- */
 const CAPTIONS = {
-  chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force. Click a quark or lepton to see which forces act on it. The dots on each tile list the forces it feels, stacked in the same order as the 3D layers.',
+  chart: 'Click a force carrier (g, γ, Z, W or H) to light up every particle that feels its force, along with the matching outline from the original chart. Click a quark or lepton to see which forces act on it.',
   layers: 'Each force is a layer: strong at the bottom, then electromagnetic, weak and Higgs on top. A particle gets a block in each layer it feels. Quarks feel all four and form full cubes. Neutrinos have only a thin weak block, and the photon has none.'
 };
 function setView(v, animate) {
@@ -548,8 +549,8 @@ function setView(v, animate) {
 function buildPicker() {
   $('#forces').innerHTML = FK.map(k => {
     const F = FORCES[k];
-    return `<button type="button" class="fbtn" id="f-${k}" data-force="${k}" style="--fc:${fcol(k)}" aria-pressed="false">
-      <span class="sw"></span><span class="fn">${F.label || F.name}</span><span class="fm">${F.carriers.map(c => byId[c].sym).join(' ')}</span></button>`;
+    return `<button type="button" class="fbtn c${CAT[F.cat]}" id="f-${k}" data-force="${k}" aria-pressed="false">
+      <span class="balls">${F.carriers.map(c => ball(byId[c])).join('')}</span><span class="fn">${F.label || F.name}</span></button>`;
   }).join('');
 }
 
@@ -567,17 +568,18 @@ function vertexSVG(v) {
     const pt = (dx, dy) => `${(mx + dx * Math.cos(an) - dy * Math.sin(an)).toFixed(1)},${(my + dx * Math.sin(an) + dy * Math.cos(an)).toFixed(1)}`;
     return `<polygon class="v-arrow" points="${pt(6, 0)} ${pt(-4, 4.5)} ${pt(-4, -4.5)}"/>`;
   };
+  const ff = s => /[α-ωΑ-Ω]/.test(s) ? 'var(--greek)' : 'var(--latin)';
   return `<svg viewBox="0 0 240 142" role="img" aria-label="Feynman vertex: ${v.a} in, ${v.b} out, ${v.x} emitted">
     <path class="v-f" d="M${ax} ${fy}L${Vx} ${Vy}L${bx} ${fy}"/>
     ${arrow(ax, fy, Vx, Vy)}${arrow(Vx, Vy, bx, fy)}
     <path class="v-b" d="${d}"${v.kind === 'dash' ? ' stroke-dasharray="7 6"' : ''}/>
     <circle class="v-dot" cx="${Vx}" cy="${Vy}" r="3.4"/>
-    <text class="v-t" x="${ax - 8}" y="${fy + 6}" text-anchor="end">${v.a}</text>
-    <text class="v-t" x="${bx + 8}" y="${fy + 6}">${v.b}</text>
-    <text class="v-t" x="${Vx + 16}" y="${Ty + 6}">${v.x}</text></svg>`;
+    <text class="v-t" style="font-family:${ff(v.a)}" x="${ax - 8}" y="${fy + 6}" text-anchor="end">${v.a}</text>
+    <text class="v-t" style="font-family:${ff(v.b)}" x="${bx + 8}" y="${fy + 6}">${v.b}</text>
+    <text class="v-t" style="font-family:${ff(v.x)}" x="${Vx + 16}" y="${Ty + 6}">${v.x}</text></svg>`;
 }
 
-const chip = p => `<button type="button" class="chip" data-pid="${p.id}" data-src="chip"><b>${p.sym}</b>${p.name}</button>`;
+const chip = p => `<button type="button" class="chip c${p.c}" data-pid="${p.id}" data-src="chip">${ball(p, 'sm')}${p.title}</button>`;
 const clearBtn = `<button type="button" class="linkbtn" data-clear>Clear</button>`;
 
 function forceCard() {
@@ -587,40 +589,43 @@ function forceCard() {
   no.forEach(p => { const r = reason(p, state.force); if (!groups.has(r)) groups.set(r, []); groups.get(r).push(p); });
   const carriers = F.carriers.map(id => {
     const c = byId[id];
-    return `<button type="button" class="crow${id === state.via ? ' via' : ''}" data-pid="${id}" data-src="chip">
-      <span class="csym">${c.sym}</span><span><b>${c.title}</b><span class="cstats">mass ${massText(c)} · charge ${c.q} · spin ${c.spin}</span></span></button>`;
+    return `<button type="button" class="crow c${c.c}${id === state.via ? ' via' : ''}" data-pid="${id}" data-src="chip">
+      ${ball(c, 'lg')}<span><b>${c.title}</b><span class="cstats">mass ${esc(c.m)} · charge ${c.q} · spin ${c.spin}</span></span></button>`;
   }).join('');
-  return `<article class="card" style="--fc:${fcol(F.key)}">
-    <div class="chead"><span class="eyebrow">Interaction</span>${clearBtn}</div>
-    <h2><span class="sw"></span>${F.title}</h2>
-    <p class="does">${F.does}</p>
+  return `<article class="card c${CAT[F.cat]}">
+    <div class="chead"><span class="pill">interaction</span>${clearBtn}</div>
+    <h2>${ball(byId[state.via], 'lg')}${F.title}</h2>
+    <p>${F.does}</p>
     <dl class="facts"><dt>Couples to</dt><dd>${F.couplesTo}</dd><dt>Range</dt><dd>${F.range}</dd><dt>Strength</dt><dd>${F.strength}</dd></dl>
     <section><h3>Carried by</h3><div class="carriers">${carriers}</div><p class="cnote">${F.note}</p></section>
-    <section><h3>One interaction, drawn as a Feynman vertex</h3>
+    <section class="c${CAT[F.cat]}"><h3>One interaction, drawn as a Feynman vertex</h3>
       <figure class="vertex">${vertexSVG(F.vertex)}<figcaption>${F.vertex.caption}</figcaption></figure></section>
     <section><h3>Feels it · ${yes.length} of 17</h3><div class="chips">${yes.map(chip).join('')}</div></section>
     <section><h3>Doesn't feel it · ${no.length}</h3>
       ${[...groups].map(([r, ps]) => `<div class="nogroup"><p>${r}</p><div class="chips">${ps.map(chip).join('')}</div></div>`).join('')}</section>
+    ${F.zoneNote ? `<p class="zonenote">${F.zoneNote}</p>` : ''}
   </article>`;
 }
 
 function particleCard() {
   const p = byId[state.pid];
-  const eyebrow = p.cat === 'quark' ? `Quark · Generation ${['I', 'II', 'III'][p.gen - 1]}`
-    : p.cat === 'lepton' ? `Lepton · Generation ${['I', 'II', 'III'][p.gen - 1]}`
-    : p.cat === 'gauge' ? `Gauge boson · carries the ${FORCES[p.mediates].name.toLowerCase()} force`
-    : 'Scalar boson · carries the Higgs interaction';
+  const gen = ['I', 'II', 'III'][p.gen - 1];
+  const eyebrow = p.cat === 'quark' ? `quark · generation ${gen}`
+    : p.cat === 'lepton' ? `lepton · generation ${gen}`
+    : p.cat === 'gauge' ? `gauge boson · carries the ${FORCES[p.mediates].name.toLowerCase()} force`
+    : 'scalar boson · carries the Higgs interaction';
   const rows = FK.map((k, i) => {
-    const y = !!p.f[i];
-    return `<li><button type="button" class="${y ? 'yes' : 'no'}" data-force="${k}" data-via="${FORCES[k].carriers[0]}" style="--fc:${fcol(k)}">
-      <span class="sw"></span><span class="fnm">${FORCES[k].name}</span><span class="st">${y ? 'Feels it' : 'No'}</span>
+    const y = !!p.f[i], F = FORCES[k], car = byId[F.carriers[0]];
+    return `<li><button type="button" class="${y ? 'yes' : 'no'} c${car.c}" data-force="${k}" data-via="${car.id}">
+      ${F.carriers.length > 1 ? `<span class="balls">${F.carriers.map(c => ball(byId[c], 'sm')).join('')}</span>` : ball(car, 'sm')}
+      <span class="fnm">${F.name}</span><span class="st">${y ? '✓ feels it' : 'no'}</span>
       <span class="why">${reason(p, k)}</span></button></li>`;
   }).join('');
   const n = p.f.reduce((a, b) => a + b, 0);
-  return `<article class="card">
-    <div class="chead"><span class="eyebrow">${eyebrow}</span>${clearBtn}</div>
-    <div class="phead"><span class="bigsym">${p.sym}</span><div><h2>${p.title}</h2>
-      <div class="stats"><span>mass ${massText(p)}</span><span>charge ${p.q}</span><span>spin ${p.spin}</span></div></div></div>
+  return `<article class="card c${p.c}">
+    <div class="chead"><span class="pill">${eyebrow}</span>${clearBtn}</div>
+    <div class="phead"><span class="minitile">${ball(p)}</span><div><h2>${p.title}</h2>
+      <div class="stats"><span>mass ${esc(p.m)}</span><span>charge ${p.q}</span><span>spin ${p.spin}</span></div></div></div>
     <section><h3>Feels ${n} of 4 interactions</h3><ul class="feels">${rows}</ul></section>
     <p class="fact">${p.fact}</p>
   </article>`;
@@ -628,7 +633,7 @@ function particleCard() {
 
 function noneCard() {
   return `<article class="card">
-    <span class="eyebrow">Start here</span>
+    <span class="pill">start here</span>
     <h2>Pick a force or a particle</h2>
     <p>Choose one of the four interactions above, or click a force carrier on the chart: g for strong, γ for electromagnetic, W or Z for weak, H for Higgs. Every particle that feels that force lights up.</p>
     <p>Click a quark or lepton instead to see which forces act on it and why.</p>
@@ -643,9 +648,7 @@ function render() {
 }
 
 /* ---------- events ---------- */
-document.addEventListener('click', e => {
-  const t = e.target.closest('[data-pid],[data-force],[data-view],[data-cam],[data-clear]');
-  if (!t) return;
+function activate(t) {
   if (t.dataset.src === '3d' && suppress) return;
   if (t.hasAttribute('data-clear')) return clearSel();
   if (t.dataset.view) { if (t.dataset.view !== state.view) setView(t.dataset.view, true); return; }
@@ -654,8 +657,21 @@ document.addEventListener('click', e => {
   const p = byId[t.dataset.pid];
   if (t.dataset.src !== 'chip' && p.mediates) selectForce(p.mediates, p.id);
   else selectParticle(p.id);
+}
+document.addEventListener('click', e => {
+  if (suppress && e.target.closest('#stage')) return;
+  const t = e.target.closest('[data-pid],[data-force],[data-view],[data-cam],[data-clear]');
+  if (t) activate(t);
 });
-document.addEventListener('keydown', e => { if (e.key === 'Escape' && state.mode !== 'none') clearSel(); });
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape' && state.mode !== 'none') return clearSel();
+  const t = e.target.closest && e.target.closest('.tile');
+  if (t && (e.key === 'Enter' || e.key === ' ')) {
+    e.preventDefault();
+    activate(t);
+    document.getElementById(t.id).focus();
+  }
+});
 
 buildChart();
 build3D();
