@@ -98,6 +98,8 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
 .key .k-pips{display:grid;gap:5px}
 .key .k-pips span{display:flex;align-items:center;gap:6px}
 .key .pip{width:8px}
+.key{min-width:0;min-height:0}
+@media (max-width:620px){ .key{display:none} }
 
 /* 3D stage */
 .stage{position:relative;height:clamp(340px,58vw,500px);border-radius:12px;background:radial-gradient(ellipse at 50% 30%,var(--stage-hi),var(--stage) 72%);overflow:hidden;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
@@ -121,7 +123,7 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
 .ghost .fc{border:1px dashed var(--ghost);opacity:.8}
 .bb{position:absolute;left:0;top:0;font-family:var(--sym);font-size:21px;line-height:1;color:var(--ink);white-space:nowrap;cursor:pointer;padding:2px 4px;transition:opacity .25s}
 .bb.dim{opacity:.28}
-.legend3d{position:absolute;left:10px;bottom:10px;display:grid;gap:2px;padding:8px;border-radius:10px;background:color-mix(in oklab,var(--surface) 90%,transparent);border:1px solid var(--line)}
+.legend3d{position:absolute;left:10px;top:10px;display:grid;gap:2px;padding:8px;border-radius:10px;background:color-mix(in oklab,var(--surface) 90%,transparent);border:1px solid var(--line)}
 .legend3d .lt{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:0 6px 2px}
 .legend3d button{font-size:12.5px;display:flex;align-items:center;gap:8px;border:0;background:transparent;padding:3px 6px;border-radius:6px;cursor:pointer;text-align:left}
 .legend3d .sw{width:22px;height:8px;border-radius:2px;background:var(--fc);flex:none}
@@ -131,10 +133,10 @@ h1{font-size:clamp(30px,4.4vw,48px);line-height:1.04;letter-spacing:-.028em;marg
 /* picker + detail */
 .picker{display:grid;gap:8px}
 .forces{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-.fbtn{text-align:left;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;transition:border-color .2s,background-color .2s}
+.fbtn{text-align:left;display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px 12px;border:1.5px solid var(--line);border-radius:12px;background:var(--surface);cursor:pointer;transition:border-color .2s,background-color .2s}
 .fbtn:hover{border-color:var(--fc)}
 .fbtn .sw{width:14px;height:14px;border-radius:3px;background:var(--fc)}
-.fbtn .fn{font-weight:600;font-size:14px;line-height:1.2}
+.fbtn .fn{font-weight:600;font-size:14px;line-height:1.2;hyphens:manual}
 .fbtn .fm{font-family:var(--sym);font-size:18px;color:var(--muted);line-height:1}
 .fbtn[aria-pressed="true"]{border-color:var(--fc);background:color-mix(in oklab,var(--fc) 11%,var(--surface))}
 .fbtn[aria-pressed="true"] .fm{color:var(--ink)}
@@ -264,7 +266,7 @@ const FORCES = {
     vertex: { kind: 'gluon', a: 'q', b: 'q', x: 'g', caption: 'A quark emits a gluon and changes color.' }
   },
   em: {
-    key: 'em', name: 'Electromagnetic', title: 'Electromagnetic force', carriers: ['gamma'],
+    key: 'em', name: 'Electromagnetic', label: 'Electro&shy;magnetic', title: 'Electromagnetic force', carriers: ['gamma'],
     couplesTo: 'Electric charge', range: 'Infinite, weakening as 1/r²',
     strength: 'Fine-structure constant α ≈ 1/137',
     does: 'Holds electrons in atoms and atoms in molecules. It is behind light, electricity, magnetism and all of chemistry.',
@@ -363,7 +365,7 @@ function clearSel() { state.mode = 'none'; render(); }
 /* ---------- 2D chart ---------- */
 function buildChart() {
   let h = ['Gen I', 'Gen II', 'Gen III'].map((g, i) => `<div class="colhead" style="grid-column:${i + 2}">${g}</div>`).join('')
-    + `<div class="colhead" style="grid-column:6">Gauge bosons</div><div class="colhead" style="grid-column:7">Scalar boson</div>`
+    + `<div class="colhead" style="grid-column:6">Gauge<br>bosons</div><div class="colhead" style="grid-column:7">Scalar<br>boson</div>`
     + `<div class="rowhead" style="grid-row:2 / 4">Quarks</div><div class="rowhead" style="grid-row:4 / 6">Leptons</div>`;
   for (const p of P) {
     const pips = [3, 2, 1, 0].map(i => `<i class="pip${p.f[i] ? ' y' : ''}" data-f="${FK[i]}" style="--fc:${fcol(FK[i])}"></i>`).join('');
@@ -547,7 +549,7 @@ function buildPicker() {
   $('#forces').innerHTML = FK.map(k => {
     const F = FORCES[k];
     return `<button type="button" class="fbtn" id="f-${k}" data-force="${k}" style="--fc:${fcol(k)}" aria-pressed="false">
-      <span class="sw"></span><span class="fn">${F.name}</span><span class="fm">${F.carriers.map(c => byId[c].sym).join(' ')}</span></button>`;
+      <span class="sw"></span><span class="fn">${F.label || F.name}</span><span class="fm">${F.carriers.map(c => byId[c].sym).join(' ')}</span></button>`;
   }).join('');
 }
 
