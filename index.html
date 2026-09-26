@@ -86,11 +86,11 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
 .stage.dragging{cursor:grabbing}
 .stage.hovering{cursor:pointer}
 .stage canvas{display:block;width:100%;height:100%}
-.tip{position:absolute;left:0;top:0;pointer-events:none;background:#fff;border:2.5px solid var(--c2,var(--line));border-radius:12px;padding:8px 12px;font-size:12.5px;line-height:1.4;box-shadow:0 6px 20px rgb(17 34 51 / .14);width:max-content;max-width:250px}
-.tip b{font-size:14px;color:var(--ink-2)}
-.tip .tm{color:var(--muted);font-variant-numeric:tabular-nums}
-.tip .tl{margin-top:4px;color:var(--ink)}
-.hint{position:absolute;right:14px;bottom:10px;font-size:12px;color:var(--muted);pointer-events:none}
+.readout{position:absolute;left:10px;right:10px;bottom:10px;pointer-events:none;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 12px;min-height:40px;background:rgb(255 255 255 / .92);border:2px solid var(--c2,var(--line));border-radius:12px;padding:8px 12px;font-size:13px;line-height:1.4;color:var(--ink);transition:border-color .15s}
+.readout b{font-size:14px;color:var(--ink-2)}
+.readout .tm{color:var(--muted);font-variant-numeric:tabular-nums}
+.readout .tl{flex-basis:100%}
+.readout .idle{color:var(--muted)}
 .stage-msg{position:absolute;inset:0;margin:0;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted)}
 .explode{display:inline-flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--ink-2);padding:3px 12px;border:1.5px solid var(--line);border-radius:999px;background:#fff}
 .explode input{width:110px;accent-color:#112233}
@@ -189,8 +189,7 @@ h1{font-size:clamp(26px,4vw,44px);line-height:1.1;letter-spacing:-.01em;margin:0
       <div id="layersView" hidden>
         <div class="stage" id="stage">
           <p class="stage-msg" id="stage-msg">Loading the 3D view…</p>
-          <div class="tip" id="tip" hidden></div>
-          <div class="hint">Drag to rotate · hover a block for details</div>
+          <div class="readout" id="readout" aria-live="polite"></div>
         </div>
       </div>
 
@@ -605,7 +604,7 @@ import * as THREE from 'https://cdnjs.cloudflare.com/ajax/libs/three.js/0.186.1/
 const SM = window.SM;
 const { P, FK, FORCES, byId, state } = SM;
 const stage = document.getElementById('stage');
-const tip = document.getElementById('tip');
+const readout = document.getElementById('readout');
 const layersView = document.getElementById('layersView');
 const reduced = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 const CAT = { q: ['#EEBBFF', '#AA77DD'], l: ['#AAEE77', '#66CC33'], g: ['#FF9977', '#DD5544'], s: ['#EEE677', '#EEBB33'] };
@@ -807,6 +806,10 @@ function placeCamera() {
   const xL = -X0 - TILE / 2 - 1.7, xR = X0 + TILE / 2 + 0.2, zB = -Z0 - TILE / 2 - 0.2, zF = Z0 + TILE / 2 + 0.2;
   tgt.set((xL + xR) / 2, stackH / 2, 0);
   const dir = new THREE.Vector3(Math.sin(cam.ph) * Math.sin(cam.th), Math.cos(cam.ph), Math.sin(cam.ph) * Math.cos(cam.th));
+  // Keep the scene clear of the readout docked at the bottom: shift the view up and fit into the space above it.
+  const w = stage.clientWidth, h = stage.clientHeight, rh = readout.offsetHeight + 16;
+  if (w && h) camera.setViewOffset(w, h, 0, rh / 2, w, h);
+  const yMax = 0.95 * (1 - rh / Math.max(h, 1));
   let dist = 12;
   for (let i = 0; i < 10; i++) {
     camera.position.copy(tgt).addScaledVector(dir, dist);
@@ -815,9 +818,9 @@ function placeCamera() {
     let m = 0;
     for (const x of [xL, xR]) for (const y of [0, stackH]) for (const z of [zB, zF]) {
       corner.set(x, y, z).project(camera);
-      m = Math.max(m, Math.abs(corner.x), Math.abs(corner.y));
+      m = Math.max(m, Math.abs(corner.x) / 0.95, Math.abs(corner.y) / yMax);
     }
-    dist *= m / 0.95;
+    dist *= m;
   }
   camera.position.copy(tgt).addScaledVector(dir, dist);
   camera.lookAt(tgt);
@@ -925,26 +928,38 @@ function pick(e) {
   return hit ? hit.object.userData : null;
 }
 const esc = s => s.replace(/</g, '&lt;');
-function hover(e) {
-  const u = pick(e);
-  stage.classList.toggle('hovering', !!u);
-  if (!u) { tip.hidden = true; return; }
-  if (u.force) {
-    tip.style.setProperty('--c2', 'var(--line)');
-    tip.innerHTML = `<b>${FORCES[u.force].title}</b><div class="tm">Click to show who feels it</div>`;
+// Hovering lights up one block or slot and describes it in the readout docked at the bottom of the stage.
+let hovered = null;
+function glow(c, on) {
+  if (!c) return;
+  if (c.block) {
+    c.mat.emissive.set(on ? CAT[c.p.c][0] : 0x000000);
+    c.mat.emissiveIntensity = on ? 0.45 : 1;
   } else {
-    const p = byId[u.pid], fk = FK[u.k], y = !!p.f[u.k];
-    tip.style.setProperty('--c2', CAT[p.c][1]);
-    tip.innerHTML = `<b>${p.title}</b><div class="tm">${esc(p.m)} · charge ${p.q} · spin ${p.spin}</div>`
-      + `<div class="tl"><b style="font-size:12.5px">${FORCES[fk].name} layer:</b> ${y ? '✓ feels it.' : 'empty slot.'} ${SM.reason(p, fk)}</div>`;
+    c.mat.color.set(on ? 0x112233 : 0x8C9BB5);
   }
-  const r = stage.getBoundingClientRect();
-  tip.hidden = false;
-  let x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
-  if (x + tip.offsetWidth > r.width - 8) x = e.clientX - r.left - tip.offsetWidth - 14;
-  if (y + tip.offsetHeight > r.height - 8) y = e.clientY - r.top - tip.offsetHeight - 14;
-  tip.style.transform = `translate(${Math.max(8, x)}px, ${Math.max(8, y)}px)`;
 }
+function idle() {
+  readout.style.setProperty('--c2', 'var(--line)');
+  readout.innerHTML = '<span class="idle">Drag to rotate. Point at a block or empty slot to see why it is there, and click to select it.</span>';
+}
+function hover(e) {
+  const u = e ? pick(e) : null;
+  const c = u && !u.force ? cells.find(c => c.p.id === u.pid && c.k === u.k) : null;
+  if (c !== hovered) { glow(hovered, false); glow(c, true); hovered = c; }
+  stage.classList.toggle('hovering', !!u);
+  if (!u) return idle();
+  if (u.force) {
+    readout.style.setProperty('--c2', 'var(--line)');
+    readout.innerHTML = `<b>${FORCES[u.force].title}</b><span class="tm">Click to show who feels it.</span>`;
+    return;
+  }
+  const p = byId[u.pid], fk = FK[u.k], y = !!p.f[u.k];
+  readout.style.setProperty('--c2', CAT[p.c][1]);
+  readout.innerHTML = `<b>${p.title}</b><span class="tm">${esc(p.m)} · charge ${p.q} · spin ${p.spin}</span>`
+    + `<span class="tl"><b style="font-size:13px">${FORCES[fk].name} layer:</b> ${y ? '✓ feels it.' : 'empty slot.'} ${SM.reason(p, fk)}</span>`;
+}
+idle();
 let drag = null;
 const el = renderer.domElement;
 el.addEventListener('pointerdown', e => {
@@ -955,7 +970,7 @@ el.addEventListener('pointermove', e => {
   if (!drag) return hover(e);
   const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
   if (!drag.moved && Math.hypot(dx, dy) > 5) {
-    drag.moved = true; tip.hidden = true;
+    drag.moved = true; hover(null);
     el.setPointerCapture(e.pointerId);
     stage.classList.add('dragging');
   }
@@ -973,7 +988,7 @@ el.addEventListener('pointerup', e => {
   drag = null; stage.classList.remove('dragging');
 });
 el.addEventListener('pointercancel', () => { drag = null; stage.classList.remove('dragging'); });
-el.addEventListener('pointerleave', () => { if (!drag) { tip.hidden = true; stage.classList.remove('hovering'); } });
+el.addEventListener('pointerleave', () => { if (!drag) hover(null); });
 
 window.SM3D = { update, show, camera: setCamera };
 update();
